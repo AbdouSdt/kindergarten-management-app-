@@ -37,6 +37,12 @@ const TEST_USERS = [
     full_name: "سعيد ولي الأمر",
     role: "parent",
   },
+  {
+    email: "teacher@creche.test",
+    password: "Passw0rd!",
+    full_name: "خديجة الأستاذة",
+    role: "teacher",
+  },
 ];
 
 async function findUserByEmail(email) {
@@ -82,6 +88,21 @@ for (const u of TEST_USERS) {
   }
 }
 
+// إسناد الأستاذ إلى صف الزهور (يعمل فقط بعد تطبيق هجرة 0003)
+const teacher = await findUserByEmail("teacher@creche.test");
+if (teacher) {
+  const { error: ctErr } = await supabase.from("classroom_teachers").upsert(
+    { teacher_id: teacher.id, classroom_id: "a0000000-0000-0000-0000-000000000001" },
+    { onConflict: "teacher_id,classroom_id" },
+  );
+  console.log(
+    ctErr
+      ? `  ⚠ لم يُسنَد الأستاذ إلى فصل (طبّق هجرة 0003 أولاً): ${ctErr.message}`
+      : "  ✓ أُسنِد الأستاذ إلى صف الزهور",
+  );
+}
+
 console.log("\nبيانات الدخول للاختبار / Test credentials:");
-console.log("  المشرف  admin  →  admin@creche.test  /  Passw0rd!");
-console.log("  ولي أمر parent →  parent@creche.test /  Passw0rd!");
+console.log("  المشرف   admin   →  admin@creche.test   /  Passw0rd!");
+console.log("  ولي أمر  parent  →  parent@creche.test  /  Passw0rd!");
+console.log("  أستاذ    teacher →  teacher@creche.test /  Passw0rd!");

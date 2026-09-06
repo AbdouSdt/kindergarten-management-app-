@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
+import { AddParentDialog } from "./add-parent-dialog";
 import { ManageChildrenDialog } from "./manage-children-dialog";
 
 export const metadata: Metadata = { title: "أولياء الأمور" };
@@ -58,16 +59,20 @@ export default async function AdminParentsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">أولياء الأمور</h1>
-        <p className="text-muted-foreground text-sm">
-          {parents.length} ولي أمر مسجّل. اربط كل حساب بأطفاله ليتمكّن من متابعتهم.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">أولياء الأمور</h1>
+          <p className="text-muted-foreground text-sm">
+            {parents.length} ولي أمر مسجّل. اربط كل حساب بأطفاله ليتمكّن من
+            متابعتهم.
+          </p>
+        </div>
+        <AddParentDialog />
       </div>
 
       {parents.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          لا يوجد أولياء أمور بعد. يمكنهم إنشاء حساب من صفحة «إنشاء حساب».
+          لا يوجد أولياء أمور بعد. اضغط «إضافة ولي أمر» لإنشاء أول حساب.
         </p>
       ) : (
         <div className="border-border overflow-x-auto rounded-lg border">

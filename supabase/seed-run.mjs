@@ -89,6 +89,56 @@ await step(
   ]),
 );
 
+// ربط الأطفال بالفصول (many-to-many). أحمد مسجّل في فصلين للتجربة.
+await step(
+  "child_classrooms",
+  db.from("child_classrooms").upsert(
+    [
+      { child_id: cid(1), classroom_id: CLASS.zohour, is_primary: true },
+      { child_id: cid(1), classroom_id: CLASS.farashat, is_primary: false },
+      { child_id: cid(2), classroom_id: CLASS.zohour, is_primary: true },
+      { child_id: cid(3), classroom_id: CLASS.zohour, is_primary: true },
+      { child_id: cid(4), classroom_id: CLASS.farashat, is_primary: true },
+      { child_id: cid(5), classroom_id: CLASS.farashat, is_primary: true },
+      { child_id: cid(6), classroom_id: CLASS.farashat, is_primary: true },
+      { child_id: cid(7), classroom_id: CLASS.nojoum, is_primary: true },
+      { child_id: cid(8), classroom_id: CLASS.nojoum, is_primary: true },
+      { child_id: cid(9), classroom_id: CLASS.nojoum, is_primary: true },
+    ],
+    { onConflict: "child_id,classroom_id" },
+  ),
+);
+
+// اشتراكات
+await step(
+  "subscriptions",
+  db.from("subscriptions").upsert(
+    [
+      { id: "e0000000-0000-0000-0000-000000000001", child_id: cid(1), plan_name: "الدوام الكامل", amount: 900, cycle: "monthly", status: "active", start_date: dayAgo(30) },
+      { id: "e0000000-0000-0000-0000-000000000002", child_id: cid(2), plan_name: "نصف الدوام", amount: 550, cycle: "monthly", status: "overdue", start_date: dayAgo(45) },
+      { id: "e0000000-0000-0000-0000-000000000003", child_id: cid(4), plan_name: "الدوام الكامل", amount: 2500, cycle: "termly", status: "active", start_date: dayAgo(20) },
+      { id: "e0000000-0000-0000-0000-000000000004", child_id: cid(7), plan_name: "الدوام الكامل", amount: 900, cycle: "monthly", status: "paused", start_date: dayAgo(60) },
+    ],
+    { onConflict: "id" },
+  ),
+);
+
+// استعمال الزمن لصف الزهور (0=الاثنين ... 5=السبت)
+await step(
+  "schedule_slots",
+  db.from("schedule_slots").upsert(
+    [
+      { id: "f0000000-0000-0000-0000-000000000001", classroom_id: CLASS.zohour, weekday: 0, starts_at: "08:30", ends_at: "09:30", title: "استقبال وأنشطة حرة" },
+      { id: "f0000000-0000-0000-0000-000000000002", classroom_id: CLASS.zohour, weekday: 0, starts_at: "09:30", ends_at: "10:30", title: "لغة عربية" },
+      { id: "f0000000-0000-0000-0000-000000000003", classroom_id: CLASS.zohour, weekday: 1, starts_at: "09:30", ends_at: "10:30", title: "رياضيات" },
+      { id: "f0000000-0000-0000-0000-000000000004", classroom_id: CLASS.zohour, weekday: 2, starts_at: "09:30", ends_at: "10:30", title: "رسم وأشغال يدوية" },
+      { id: "f0000000-0000-0000-0000-000000000005", classroom_id: CLASS.zohour, weekday: 3, starts_at: "10:45", ends_at: "11:45", title: "تربية بدنية" },
+      { id: "f0000000-0000-0000-0000-000000000006", classroom_id: CLASS.zohour, weekday: 4, starts_at: "09:30", ends_at: "10:30", title: "قصة وأناشيد" },
+    ],
+    { onConflict: "id" },
+  ),
+);
+
 // ربط أوّل ولي أمر بطفلين
 const { data: parent } = await db
   .from("profiles")

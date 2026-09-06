@@ -3,12 +3,25 @@
 A role-based kindergarten management app built with **Next.js (App Router)**,
 **Tailwind CSS**, and **Supabase** (Postgres + Auth + Row Level Security).
 
-Two roles:
+Three roles:
 
-| Role       | Can do                                                                        |
-| ---------- | ---------------------------------------------------------------------------- |
-| **Admin**  | Manage children, parents, classrooms, attendance and announcements           |
-| **Parent** | View their own children, attendance history and announcements                |
+| Role        | Can do                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| **Admin**   | Everything: children (+ photos, multi-classroom), parents, staff, classrooms, attendance, weekly schedule, subscriptions, announcements |
+| **Teacher** | Only their assigned classrooms: view children, record attendance, view the weekly schedule               |
+| **Parent**  | Their own children only: profile, attendance history, weekly schedule, subscription status, announcements |
+
+Accounts are **created by an admin** (parents and teachers via the dashboard). There is no self-service signup.
+
+### Features
+
+- Children: profile, **photo** (Supabase Storage), **enrolment in multiple classrooms**, allergy notes, guardian links
+- Attendance: daily per-classroom checklist (present / absent / late / excused), history for parents & teachers
+- **Weekly schedule** ("استعمال الزمن"): per-classroom timetable, editable by admin, read-only for parents & teachers
+- **Subscriptions**: per-child monthly / termly / annual plans with status, plus an estimated monthly-revenue tile; parents see their child's status
+- Announcements: all / parents / single-classroom audiences
+- Staff: admin creates teacher accounts and assigns them to classrooms
+- Arabic-first, fully RTL, responsive (sidebar ↔ mobile top bar, bottom-sheet modals)
 
 ---
 
@@ -26,67 +39,56 @@ Two roles:
 
 ```
 .
-├── next.config.mjs
-├── tailwind.config.ts             # Tailwind theme (colors, radius, fonts)
-├── postcss.config.mjs
-├── .env.example                   # Copy to .env.local and fill in
-│
 ├── supabase/
-│   ├── config.toml                # Supabase CLI config (local dev)
-│   ├── seed.sql                   # Arabic seed data (classrooms, children, attendance, announcements)
-│   ├── seed-test-users.mjs        # Creates admin + parent test users via the Admin API
+│   ├── config.toml
+│   ├── seed.sql                   # Arabic sample data (SQL)
+│   ├── seed-run.mjs               # Same data via the Supabase API (no psql)
+│   ├── seed-test-users.mjs        # admin + parent + teacher test accounts
 │   └── migrations/
-│       └── 0001_initial_schema.sql  # Tables, enums, triggers, RLS policies
+│       ├── 0001_initial_schema.sql
+│       ├── 0002_add_teacher_role.sql
+│       └── 0003_platform_expansion.sql   # photos, multi-classroom, subs, schedule, teacher RLS, storage
 │
 └── src/
-    ├── middleware.ts             # Refreshes the auth session, guards protected routes
+    ├── middleware.ts             # Session refresh + guards /admin /teacher /parent
     ├── app/
-    │   ├── layout.tsx             # Root layout (dir="rtl" lang="ar") + Cairo font
-    │   ├── page.tsx               # Landing page (redirects logged-in users)
-    │   ├── globals.css            # Tailwind directives + theme variables
-    │   ├── not-found.tsx
+    │   ├── layout.tsx            # Root layout (dir="rtl" lang="ar") + Cairo font
+    │   ├── page.tsx  globals.css  not-found.tsx
+    │   ├── (auth)/login/page.tsx # Login only — no self-signup
+    │   ├── auth/sign-out/route.ts
     │   │
-    │   ├── (auth)/                # Route group – shared auth shell
-    │   │   ├── layout.tsx
-    │   │   ├── login/page.tsx
-    │   │   └── signup/page.tsx
+    │   ├── admin/                # Admin-only (requireRole in layout)
+    │   │   ├── page.tsx          # Dashboard: children / present / absent / classrooms
+    │   │   ├── children/         # table + add/edit dialog (photo upload, multi-classroom)
+    │   │   ├── parents/          # table + add-parent + manage-children link dialog
+    │   │   ├── staff/            # teachers: add + assign classrooms
+    │   │   ├── classrooms/
+    │   │   ├── attendance/       # daily checklist per classroom
+    │   │   ├── schedule/         # weekly timetable editor per classroom
+    │   │   ├── subscriptions/    # per-child subscriptions CRUD + revenue
+    │   │   └── announcements/
     │   │
-    │   ├── auth/
-    │   │   ├── callback/route.ts  # OAuth / email confirmation exchange
-    │   │   └── sign-out/route.ts  # POST to end the session
+    │   ├── teacher/              # Teacher-only, scoped to assigned classrooms
+    │   │   ├── page.tsx  children/  attendance/  schedule/
     │   │
-    │   ├── admin/                 # Admin-only area (role checked in layout.tsx)
-    │   │   ├── layout.tsx
-    │   │   ├── page.tsx           # Dashboard with live counts
-    │   │   ├── children/page.tsx
-    │   │   ├── parents/page.tsx
-    │   │   ├── classrooms/page.tsx
-    │   │   ├── attendance/page.tsx
-    │   │   └── announcements/page.tsx
-    │   │
-    │   └── parent/                # Parent-only area (role checked in layout.tsx)
-    │       ├── layout.tsx
-    │       ├── page.tsx
-    │       ├── children/page.tsx
-    │       ├── attendance/page.tsx
-    │       └── announcements/page.tsx
+    │   └── parent/               # Parent-only, own children
+    │       ├── page.tsx  children/  attendance/  schedule/  subscription/  announcements/
     │
     ├── components/
-    │   ├── ui/                    # Small presentational primitives (Button, Card)
-    │   ├── nav/                   # AppShell + SidebarNav
-    │   ├── auth/                  # SignOutButton
+    │   ├── ui/                   # button, card, field, modal, avatar, status-badge
+    │   ├── schedule/             # weekly-schedule grid
+    │   ├── nav/                  # AppShell + SidebarNav
     │   └── placeholder-page.tsx
     │
     ├── lib/
-    │   ├── supabase/
-    │   │   ├── client.ts          # Browser client (Client Components)
-    │   │   ├── server.ts          # Server client + admin (service-role) client
-    │   │   └── middleware.ts      # Session refresh + route protection
-    │   ├── auth.ts                # getProfile / requireUser / requireRole helpers
-    │   └── utils.ts               # cn(), formatDate()
+    │   ├── supabase/{client,server,middleware}.ts   # server.ts also exports createAdminClient
+    │   ├── auth.ts               # getProfile, requireRole, assertAdmin, assertStaff,
+    │   │                         #   getTeacherClassroomIds, homePathForRole
+    │   ├── storage.ts            # uploadChildPhoto (child-photos bucket)
+    │   ├── forms.ts              # FormState type for useActionState
+    │   └── utils.ts              # cn(), formatDate()
     │
-    └── types/
-        └── database.types.ts      # DB types (regenerate with `supabase gen types`)
+    └── types/database.types.ts
 ```
 
 ---
@@ -122,23 +124,20 @@ Fill in:
 
 ### 4. Apply the database schema
 
-Either paste `supabase/migrations/0001_initial_schema.sql` into the
-Supabase **SQL Editor**, or use the CLI:
+Run the migrations **in order** — paste each into the Supabase **SQL Editor**
+and run it, or use the CLI (`npx supabase link --project-ref <ref>` then
+`npx supabase db push`):
 
-```bash
-npx supabase link --project-ref <your-project-ref>
-npx supabase db push
-```
+1. `supabase/migrations/0001_initial_schema.sql` — core tables, enums, RLS
+2. `supabase/migrations/0002_add_teacher_role.sql` — adds the `teacher` role
+3. `supabase/migrations/0003_platform_expansion.sql` — child photos, multi-classroom
+   enrolment (`child_classrooms`), `classroom_teachers`, `subscriptions`,
+   `schedule_slots`, teacher RLS, and the public `child-photos` storage bucket
 
-### 5. Add the auth redirect URL
+> `0002` must be its own step — Postgres won't let the new enum value be used in
+> the same transaction that adds it.
 
-In **Authentication → URL Configuration**, add:
-
-```
-http://localhost:3000/auth/callback
-```
-
-### 6. Run the app
+### 5. Run the app
 
 ```bash
 npm run dev
@@ -146,23 +145,24 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-### 7. (Optional) Load Arabic test data
+### 6. (Optional) Load Arabic test data
 
 ```bash
-# Seed classrooms / children / attendance / announcements
-#   local:  supabase db reset          (re-runs migrations + supabase/seed.sql)
-#   hosted: paste supabase/seed.sql into the SQL Editor and Run
-#           (or: psql "<connection-string>" -f supabase/seed.sql)
-
-# Create an admin + a parent test user (needs SUPABASE_SERVICE_ROLE_KEY in .env.local)
+# 1. Test users — admin + parent + teacher (needs SUPABASE_SERVICE_ROLE_KEY in .env.local)
 node --env-file=.env.local supabase/seed-test-users.mjs
-#   admin@creche.test  / Passw0rd!
-#   parent@creche.test / Passw0rd!
+#   admin@creche.test   / Passw0rd!
+#   parent@creche.test  / Passw0rd!
+#   teacher@creche.test / Passw0rd!  (assigned to صف الزهور)
+
+# 2. Sample data — classrooms, children (+ multi-classroom), attendance,
+#    announcements, subscriptions, weekly schedule, guardian links.
+#    Uses the API (no psql needed); safe to re-run.
+node --env-file=.env.local supabase/seed-run.mjs
 ```
 
-The guardian-link section of `seed.sql` looks up the first existing `parent`
-profile, so run `seed-test-users.mjs` **before** (re-)running the seed if you
-want the parent portal to show linked children.
+Run `seed-test-users.mjs` **before** `seed-run.mjs` so the guardian links attach
+to a real parent account and the teacher gets a classroom. `supabase/seed.sql`
+is the same data as a plain SQL script for `supabase db reset` / the SQL Editor.
 
 ---
 
@@ -175,26 +175,31 @@ correctly; email / password inputs are pinned to `dir="ltr"`.
 
 ---
 
-## Roles
+## Roles & accounts
 
-- New sign-ups through `/signup` are always created as **`parent`**
-  (the `handle_new_user()` trigger reads `role` from the sign-up metadata and
-  defaults to `parent`).
-- To make an **admin**, run this in the Supabase SQL editor after the user has
-  signed up:
+- **No self-service signup.** The admin creates parent and teacher accounts from
+  the dashboard (`/admin/parents` → «إضافة ولي أمر», `/admin/staff` → «إضافة
+  أستاذ»). These call `supabase.auth.admin.createUser` server-side with the
+  service-role key; the `handle_new_user()` trigger seeds the `profiles` row.
+- The **first admin** must be promoted manually after creating the user in the
+  Supabase dashboard:
 
   ```sql
-  update public.profiles set role = 'admin' where id = '<auth-user-id>';
+  update public.profiles set role = 'admin'
+  where id = (select id from auth.users where email = 'you@example.com');
   ```
 
+- Teachers are scoped to classrooms via `classroom_teachers`. Assign them in
+  `/admin/staff` → «إدارة الفصول».
 - Route protection is layered:
   - `src/middleware.ts` – bounces unauthenticated users to `/login?redirectTo=…`
-    for any `/admin` or `/parent` path, and sends logged-in users away from the
-    auth pages.
-  - `src/app/admin/layout.tsx` / `src/app/parent/layout.tsx` – call `requireRole()`
-    so a parent hitting `/admin` is redirected to `/parent` and vice-versa.
-  - **Row Level Security** in Postgres is the real enforcement: parents can only
-    read rows for children they are linked to via the `guardians` table.
+    for any `/admin`, `/teacher` or `/parent` path.
+  - `src/app/{admin,teacher,parent}/layout.tsx` – call `requireRole()`; a user
+    hitting the wrong area is redirected to their own home
+    (`homePathForRole` in `src/lib/auth.ts`).
+  - **Row Level Security** is the real enforcement: parents see only rows for
+    children they guard (`guardians`); teachers see only children/attendance in
+    their assigned classrooms (`classroom_teachers` + `child_classrooms`).
 
 ---
 
