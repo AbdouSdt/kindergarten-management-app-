@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
@@ -87,11 +86,8 @@ function LoginForm() {
         </button>
       </form>
 
-      <p className="text-muted-foreground text-center text-sm">
-        ليس لديك حساب؟{" "}
-        <Link href="/signup" className="text-primary font-medium hover:underline">
-          إنشاء حساب
-        </Link>
+      <p className="text-muted-foreground text-center text-xs">
+        تُنشأ الحسابات من قِبل إدارة الحضانة. لا يمكن التسجيل ذاتياً.
       </p>
     </div>
   );

@@ -107,7 +107,7 @@ begin
   else
     insert into public.guardians (child_id, parent_id, relationship, is_primary) values
       ('b0000000-0000-0000-0000-000000000001', v_parent, 'الأب', true),
-      ('b0000000-0000-0000-0000-000000000004', v_parent, 'الأم', true)
+      ('b0000000-0000-0000-0000-000000000004', v_parent, 'الأب', true)
     on conflict do nothing;
     raise notice '✓  تم ربط ولي الأمر % بطفلين.', v_parent;
   end if;

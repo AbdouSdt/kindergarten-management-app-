@@ -106,7 +106,7 @@ if (!parent) {
     db.from("guardians").upsert(
       [
         { child_id: cid(1), parent_id: parent.id, relationship: "الأب", is_primary: true },
-        { child_id: cid(4), parent_id: parent.id, relationship: "الأم", is_primary: true },
+        { child_id: cid(4), parent_id: parent.id, relationship: "الأب", is_primary: true },
       ],
       { onConflict: "child_id,parent_id" },
     ),

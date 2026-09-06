@@ -5,8 +5,11 @@ const navItems = [
   { label: "لوحة التحكم", href: "/admin" },
   { label: "الأطفال", href: "/admin/children" },
   { label: "أولياء الأمور", href: "/admin/parents" },
+  { label: "الطاقم", href: "/admin/staff" },
   { label: "الفصول", href: "/admin/classrooms" },
   { label: "الحضور", href: "/admin/attendance" },
+  { label: "استعمال الزمن", href: "/admin/schedule" },
+  { label: "الاشتراكات", href: "/admin/subscriptions" },
   { label: "الإعلانات", href: "/admin/announcements" },
 ];
 

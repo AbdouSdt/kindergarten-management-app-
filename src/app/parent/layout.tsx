@@ -5,6 +5,8 @@ const navItems = [
   { label: "نظرة عامة", href: "/parent" },
   { label: "أطفالي", href: "/parent/children" },
   { label: "الحضور", href: "/parent/attendance" },
+  { label: "استعمال الزمن", href: "/parent/schedule" },
+  { label: "الاشتراك", href: "/parent/subscription" },
   { label: "الإعلانات", href: "/parent/announcements" },
 ];
 

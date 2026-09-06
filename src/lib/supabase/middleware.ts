@@ -14,8 +14,8 @@ import { createServerClient } from "@supabase/ssr";
 
 import type { Database } from "@/types/database.types";
 
-const PROTECTED_PREFIXES = ["/admin", "/parent"];
-const AUTH_ROUTES = ["/login", "/signup"];
+const PROTECTED_PREFIXES = ["/admin", "/parent", "/teacher"];
+const AUTH_ROUTES = ["/login"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

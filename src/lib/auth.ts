@@ -10,6 +10,18 @@ import type { Database } from "@/types/database.types";
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type UserRole = Database["public"]["Enums"]["user_role"];
 
+/** Landing page for each role. */
+export function homePathForRole(role: UserRole): string {
+  switch (role) {
+    case "admin":
+      return "/admin";
+    case "teacher":
+      return "/teacher";
+    default:
+      return "/parent";
+  }
+}
+
 export async function getSessionUser() {
   const supabase = await createClient();
   const {
@@ -53,6 +65,28 @@ export async function assertAdmin(): Promise<Profile> {
   return profile;
 }
 
+/**
+ * Assert the caller is staff (admin or teacher) from inside a Server Action.
+ * Returns the profile so the caller can branch on role.
+ */
+export async function assertStaff(): Promise<Profile> {
+  const profile = await getProfile();
+  if (!profile || (profile.role !== "admin" && profile.role !== "teacher")) {
+    throw new Error("Unauthorized");
+  }
+  return profile;
+}
+
+/** Classroom ids the given teacher is assigned to. Empty for non-teachers. */
+export async function getTeacherClassroomIds(teacherId: string): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("classroom_teachers")
+    .select("classroom_id")
+    .eq("teacher_id", teacherId);
+  return (data ?? []).map((r) => r.classroom_id);
+}
+
 /** Require a logged-in user with one of the given roles. */
 export async function requireRole(roles: UserRole | UserRole[]) {
   const allowed = Array.isArray(roles) ? roles : [roles];
@@ -61,7 +95,7 @@ export async function requireRole(roles: UserRole | UserRole[]) {
   if (!profile) redirect("/login");
   if (!allowed.includes(profile.role)) {
     // Send users to their own home instead of showing a 403.
-    redirect(profile.role === "admin" ? "/admin" : "/parent");
+    redirect(homePathForRole(profile.role));
   }
 
   return profile;
