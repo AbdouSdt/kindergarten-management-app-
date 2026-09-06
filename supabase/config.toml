@@ -1,0 +1,24 @@
+# Minimal Supabase CLI config. Full reference:
+# https://supabase.com/docs/guides/local-development/cli/config
+project_id = "kindergarten-management-app"
+
+[db]
+port = 54322
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+port = 54323
+
+[auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
