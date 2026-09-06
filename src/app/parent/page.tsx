@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { Avatar } from "@/components/ui/avatar";
 import { Card, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,7 +12,7 @@ export default async function ParentOverviewPage() {
   // RLS ensures a parent only sees their own children.
   const { data: children } = await supabase
     .from("children")
-    .select("id, first_name, last_name, classrooms(name)");
+    .select("id, first_name, last_name, photo_url, classrooms(name)");
 
   const { data: announcements } = await supabase
     .from("announcements")
@@ -33,8 +34,13 @@ export default async function ParentOverviewPage() {
           <CardTitle>أطفالي</CardTitle>
           <ul className="mt-3 space-y-2 text-sm">
             {(children ?? []).map((child) => (
-              <li key={child.id} className="flex justify-between">
-                <span>
+              <li key={child.id} className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Avatar
+                    src={child.photo_url}
+                    name={`${child.first_name} ${child.last_name}`}
+                    size={28}
+                  />
                   {child.first_name} {child.last_name}
                 </span>
                 <span className="text-muted-foreground">

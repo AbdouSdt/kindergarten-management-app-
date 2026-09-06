@@ -37,11 +37,20 @@ export default async function AdminAttendancePage({
   const initial: Record<string, AttendanceStatus> = {};
 
   if (selectedClassroom) {
-    const { data: kids } = await supabase
-      .from("children")
-      .select("id, first_name, last_name")
-      .eq("classroom_id", selectedClassroom)
-      .order("first_name");
+    // A child may be enrolled in several classrooms — read the junction table.
+    const { data: enrolled } = await supabase
+      .from("child_classrooms")
+      .select("child_id")
+      .eq("classroom_id", selectedClassroom);
+    const enrolledIds = (enrolled ?? []).map((r) => r.child_id);
+
+    const { data: kids } = enrolledIds.length
+      ? await supabase
+          .from("children")
+          .select("id, first_name, last_name")
+          .in("id", enrolledIds)
+          .order("first_name")
+      : { data: [] as { id: string; first_name: string; last_name: string }[] };
     childrenList = kids ?? [];
 
     if (childrenList.length) {
