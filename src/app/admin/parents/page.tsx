@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 import { AddParentDialog } from "./add-parent-dialog";
 import { ManageChildrenDialog } from "./manage-children-dialog";
+import { DeleteParentButton, EditParentDialog } from "./parent-dialog";
 
 export const metadata: Metadata = { title: "أولياء الأمور" };
 
@@ -23,6 +29,7 @@ export default async function AdminParentsPage() {
     supabase.from("guardians").select("parent_id, child_id, relationship"),
   ]);
 
+  const loadError = parentsRes.error;
   const parents = parentsRes.data ?? [];
   const children = childrenRes.data ?? [];
   const guardians = guardiansRes.data ?? [];
@@ -70,10 +77,17 @@ export default async function AdminParentsPage() {
         <AddParentDialog />
       </div>
 
-      {parents.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لا يوجد أولياء أمور بعد. اضغط «إضافة ولي أمر» لإنشاء أول حساب.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : parents.length === 0 ? (
+        <EmptyState
+          title="لا يوجد أولياء أمور بعد"
+          description="اضغط «إضافة ولي أمر» لإنشاء أول حساب."
+        />
       ) : (
         <div className="border-border overflow-x-auto rounded-lg border">
           <table className="w-full min-w-[760px] text-sm">
@@ -133,11 +147,28 @@ export default async function AdminParentsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <ManageChildrenDialog
-                        parent={{ id: p.id, name: p.full_name ?? "ولي الأمر" }}
-                        linkedChildren={linkedChildren}
-                        allChildren={allChildOptions}
-                      />
+                      <div className="flex flex-wrap items-center gap-3">
+                        <ManageChildrenDialog
+                          parent={{
+                            id: p.id,
+                            name: p.full_name ?? "ولي الأمر",
+                          }}
+                          linkedChildren={linkedChildren}
+                          allChildren={allChildOptions}
+                        />
+                        <EditParentDialog
+                          parent={{
+                            id: p.id,
+                            fullName: p.full_name ?? "",
+                            email: emailById.get(p.id) ?? "",
+                            phone: p.phone ?? "",
+                          }}
+                        />
+                        <DeleteParentButton
+                          id={p.id}
+                          name={p.full_name ?? "ولي الأمر"}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );

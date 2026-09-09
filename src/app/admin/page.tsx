@@ -32,10 +32,26 @@ export default async function AdminDashboardPage() {
   ]);
 
   const stats = [
-    { title: "إجمالي الأطفال", value: childrenC.count ?? 0 },
-    { title: "الحاضرون اليوم", value: presentC.count ?? 0 },
-    { title: "الغائبون اليوم", value: absentC.count ?? 0 },
-    { title: "عدد الفصول", value: classroomsC.count ?? 0 },
+    {
+      title: "إجمالي الأطفال",
+      value: childrenC.count ?? 0,
+      failed: Boolean(childrenC.error),
+    },
+    {
+      title: "الحاضرون اليوم",
+      value: presentC.count ?? 0,
+      failed: Boolean(presentC.error),
+    },
+    {
+      title: "الغائبون اليوم",
+      value: absentC.count ?? 0,
+      failed: Boolean(absentC.error),
+    },
+    {
+      title: "عدد الفصول",
+      value: classroomsC.count ?? 0,
+      failed: Boolean(classroomsC.error),
+    },
   ];
 
   return (
@@ -59,7 +75,13 @@ export default async function AdminDashboardPage() {
         {stats.map((s) => (
           <Card key={s.title}>
             <CardTitle>{s.title}</CardTitle>
-            <CardValue>{s.value}</CardValue>
+            {s.failed ? (
+              <p className="mt-2 text-sm font-medium text-red-600" role="alert">
+                تعذّر تحميل هذا الرقم
+              </p>
+            ) : (
+              <CardValue>{s.value}</CardValue>
+            )}
           </Card>
         ))}
       </div>

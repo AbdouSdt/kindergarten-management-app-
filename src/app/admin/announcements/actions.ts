@@ -51,6 +51,52 @@ export async function createAnnouncement(
   return { ok: true };
 }
 
+export async function updateAnnouncement(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { error: "غير مصرح لك بهذا الإجراء." };
+  }
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { error: "معرّف الإعلان مفقود." };
+
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const audience = (String(formData.get("audience") ?? "all") ||
+    "all") as Audience;
+  const classroomId = String(formData.get("classroom_id") ?? "").trim();
+
+  if (!title || !body) {
+    return { error: "العنوان والنص حقلان مطلوبان." };
+  }
+  if (audience === "classroom" && !classroomId) {
+    return { error: "اختر الفصل عند تحديد جمهور «فصل محدد»." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("announcements")
+    .update({
+      title,
+      body,
+      audience,
+      classroom_id: audience === "classroom" ? classroomId : null,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/announcements");
+  revalidatePath("/admin");
+  revalidatePath("/parent/announcements");
+  revalidatePath("/parent");
+  return { ok: true };
+}
+
 export async function deleteAnnouncement(
   id: string,
 ): Promise<{ error?: string; ok?: boolean }> {

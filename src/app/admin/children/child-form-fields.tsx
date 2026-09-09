@@ -26,35 +26,64 @@ export function ChildFormFields({
   const [preview, setPreview] = useState<string | null>(
     defaults?.photo_url ?? null,
   );
+  const [removePhoto, setRemovePhoto] = useState(false);
   const selected = new Set(defaults?.classroom_ids ?? []);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Avatar
-          src={preview}
-          name={`${defaults?.first_name ?? ""} ${defaults?.last_name ?? ""}`}
-          size={56}
-        />
-        <div className="min-w-0">
-          <label
-            htmlFor="photo"
-            className="text-sm font-medium block"
-          >
-            الصورة (اختياري)
-          </label>
-          <input
-            id="photo"
-            name="photo"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              setPreview(file ? URL.createObjectURL(file) : defaults?.photo_url ?? null);
-            }}
-            className="text-muted-foreground mt-1 block w-full text-xs file:me-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium"
+      <div className="space-y-2">
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={preview}
+            name={`${defaults?.first_name ?? ""} ${defaults?.last_name ?? ""}`}
+            size={56}
           />
+          <div className="min-w-0">
+            <label
+              htmlFor="photo"
+              className="text-sm font-medium block"
+            >
+              الصورة (اختياري)
+            </label>
+            <input
+              id="photo"
+              name="photo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setRemovePhoto(false);
+                setPreview(
+                  file
+                    ? URL.createObjectURL(file)
+                    : removePhoto
+                      ? null
+                      : defaults?.photo_url ?? null,
+                );
+              }}
+              className="text-muted-foreground mt-1 block w-full text-xs file:me-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium"
+            />
+          </div>
         </div>
+
+        {defaults?.photo_url && (
+          <label className="flex min-h-[44px] items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="remove_photo"
+              value="1"
+              checked={removePhoto}
+              onChange={(e) => {
+                setRemovePhoto(e.target.checked);
+                setPreview(
+                  e.target.checked ? null : defaults?.photo_url ?? null,
+                );
+              }}
+              className="size-4"
+            />
+            إزالة الصورة الحالية
+          </label>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
@@ -21,7 +27,7 @@ export default async function AdminAttendancePage({
   const sp = await searchParams;
   const supabase = await createClient();
 
-  const { data: classrooms } = await supabase
+  const { data: classrooms, error: loadError } = await supabase
     .from("classrooms")
     .select("id, name")
     .order("name");
@@ -68,17 +74,32 @@ export default async function AdminAttendancePage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">الحضور اليومي</h1>
-        <p className="text-muted-foreground text-sm">
-          اختر الفصل والتاريخ، علّم حالة كل طفل، ثم احفظ.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">الحضور اليومي</h1>
+          <p className="text-muted-foreground text-sm">
+            اختر الفصل والتاريخ، علّم حالة كل طفل، ثم احفظ.
+          </p>
+        </div>
+        <Link
+          href="/admin/attendance/history"
+          className="inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+        >
+          سجل الحضور
+        </Link>
       </div>
 
-      {list.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لا توجد فصول بعد. أضف فصلاً أولاً.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : list.length === 0 ? (
+        <EmptyState
+          title="لا توجد فصول بعد"
+          description="أضف فصلاً أولاً من صفحة الفصول."
+        />
       ) : (
         <AttendanceBoard
           key={`${selectedClassroom}-${date}`}

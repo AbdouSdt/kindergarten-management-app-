@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { Avatar } from "@/components/ui/avatar";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -11,7 +16,7 @@ export const metadata: Metadata = { title: "الاشتراك" };
 export default async function ParentSubscriptionPage() {
   const supabase = await createClient();
 
-  const { data: childrenData } = await supabase
+  const { data: childrenData, error: loadError } = await supabase
     .from("children")
     .select("id, first_name, last_name, photo_url")
     .order("first_name");
@@ -59,10 +64,14 @@ export default async function ParentSubscriptionPage() {
         </p>
       </div>
 
-      {kids.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لا يوجد أطفال مرتبطون بحسابك بعد.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : kids.length === 0 ? (
+        <EmptyState title="لا يوجد أطفال مرتبطون بحسابك بعد" />
       ) : (
         <div className="space-y-4">
           {kids.map((child) => {

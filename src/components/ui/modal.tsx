@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type ModalProps = {
   open: boolean;
@@ -10,9 +10,13 @@ type ModalProps = {
   children: React.ReactNode;
 };
 
+const FOCUSABLE =
+  'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
 /**
- * Lightweight accessible dialog. Bottom-sheet on mobile, centered on desktop.
- * Closes on backdrop click and Escape; locks body scroll while open.
+ * Lightweight accessible dialog. Bottom-sheet (slides up, full width) on phones,
+ * centered card on >= sm. Traps focus, closes on backdrop click and Escape,
+ * locks body scroll, and restores focus on close.
  */
 export function Modal({
   open,
@@ -21,11 +25,39 @@ export function Modal({
   description,
   children,
 }: ModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
 
+    const panel = panelRef.current;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    const focusables = () =>
+      panel ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)) : [];
+
+    (focusables()[0] ?? panel)?.focus();
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const items = focusables();
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", onKey);
 
@@ -35,6 +67,7 @@ export function Modal({
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
+      previouslyFocused?.focus?.();
     };
   }, [open, onClose]);
 
@@ -48,10 +81,12 @@ export function Modal({
         aria-hidden
       />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="bg-card border-border relative z-10 flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border shadow-xl sm:rounded-2xl"
+        tabIndex={-1}
+        className="bg-card border-border sheet-panel relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border shadow-xl outline-none pb-[env(safe-area-inset-bottom)] sm:rounded-2xl sm:pb-0"
       >
         <div className="border-border flex items-start justify-between gap-4 border-b p-5">
           <div>
@@ -66,7 +101,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="إغلاق"
-            className="text-muted-foreground hover:text-foreground -m-1 shrink-0 rounded-md p-1 text-xl leading-none"
+            className="text-muted-foreground hover:text-foreground -me-2 -mt-2 flex size-11 shrink-0 items-center justify-center rounded-md text-xl leading-none"
           >
             ✕
           </button>

@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
@@ -42,6 +47,12 @@ export default async function AdminSubscriptionsPage() {
     supabase.from("classrooms").select("id, name").order("name"),
   ]);
 
+  const loadError = subsRes.error;
+  // Secondary lookups feed the child-name and classroom columns; surface a hint
+  // rather than let those cells blank out silently.
+  const lookupError = Boolean(
+    childrenRes.error || enrollRes.error || classroomsRes.error,
+  );
   const subscriptions = subsRes.data ?? [];
   const children = childrenRes.data ?? [];
   const classroomName = new Map(
@@ -123,75 +134,84 @@ export default async function AdminSubscriptionsPage() {
         ))}
       </div>
 
-      <div className="border-border overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[820px] text-sm">
-          <thead className="bg-muted text-muted-foreground text-start">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">الطفل</th>
-              <th className="px-4 py-2.5 font-medium">الخطة</th>
-              <th className="px-4 py-2.5 font-medium">المبلغ</th>
-              <th className="px-4 py-2.5 font-medium">الدورة</th>
-              <th className="px-4 py-2.5 font-medium">الحالة</th>
-              <th className="px-4 py-2.5 font-medium">البداية</th>
-              <th className="px-4 py-2.5 font-medium">النهاية</th>
-              <th className="px-4 py-2.5 font-medium">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subscriptions.map((s) => {
-              const name = childName.get(s.child_id) ?? "طفل غير معروف";
-              return (
-                <tr key={s.id} className="border-border border-t align-top">
-                  <td className="px-4 py-3 font-medium">{name}</td>
-                  <td className="px-4 py-3">{s.plan_name}</td>
-                  <td className="px-4 py-3">
-                    {s.amount} {s.currency}
-                  </td>
-                  <td className="px-4 py-3">{CYCLE_LABEL[s.cycle]}</td>
-                  <td className="px-4 py-3">
-                    <StatusPill status={s.status} />
-                  </td>
-                  <td className="px-4 py-3">{formatDate(s.start_date)}</td>
-                  <td className="px-4 py-3">
-                    {s.end_date ? formatDate(s.end_date) : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="flex items-center gap-3">
-                      <SubscriptionDialog
-                        childrenList={childOptions}
-                        subscription={{
-                          id: s.id,
-                          child_id: s.child_id,
-                          child_name: name,
-                          plan_name: s.plan_name,
-                          amount: s.amount,
-                          currency: s.currency,
-                          cycle: s.cycle,
-                          status: s.status,
-                          start_date: s.start_date,
-                          end_date: s.end_date,
-                          notes: s.notes,
-                        }}
-                      />
-                      <DeleteSubscriptionButton id={s.id} />
-                    </span>
-                  </td>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : subscriptions.length === 0 ? (
+        <EmptyState title="لا توجد اشتراكات بعد" />
+      ) : (
+        <>
+          {lookupError && (
+            <EmptyState
+              tone="error"
+              title="تعذّر تحميل بعض البيانات المرتبطة"
+              description="قد لا تظهر أسماء الأطفال أو الفصول بشكل صحيح. حدّث الصفحة."
+            />
+          )}
+          <div className="border-border overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[820px] text-sm">
+              <thead className="bg-muted text-muted-foreground text-start">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium">الطفل</th>
+                  <th className="px-4 py-2.5 font-medium">الخطة</th>
+                  <th className="px-4 py-2.5 font-medium">المبلغ</th>
+                  <th className="px-4 py-2.5 font-medium">الدورة</th>
+                  <th className="px-4 py-2.5 font-medium">الحالة</th>
+                  <th className="px-4 py-2.5 font-medium">البداية</th>
+                  <th className="px-4 py-2.5 font-medium">النهاية</th>
+                  <th className="px-4 py-2.5 font-medium">إجراءات</th>
                 </tr>
-              );
-            })}
-            {subscriptions.length === 0 && (
-              <tr>
-                <td
-                  colSpan={8}
-                  className="text-muted-foreground px-4 py-10 text-center"
-                >
-                  لا توجد اشتراكات بعد.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {subscriptions.map((s) => {
+                  const name = childName.get(s.child_id) ?? "طفل غير معروف";
+                  return (
+                    <tr key={s.id} className="border-border border-t align-top">
+                      <td className="px-4 py-3 font-medium">{name}</td>
+                      <td className="px-4 py-3">{s.plan_name}</td>
+                      <td className="px-4 py-3">
+                        {s.amount} {s.currency}
+                      </td>
+                      <td className="px-4 py-3">{CYCLE_LABEL[s.cycle]}</td>
+                      <td className="px-4 py-3">
+                        <StatusPill status={s.status} />
+                      </td>
+                      <td className="px-4 py-3">{formatDate(s.start_date)}</td>
+                      <td className="px-4 py-3">
+                        {s.end_date ? formatDate(s.end_date) : "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-3">
+                          <SubscriptionDialog
+                            childrenList={childOptions}
+                            subscription={{
+                              id: s.id,
+                              child_id: s.child_id,
+                              child_name: name,
+                              plan_name: s.plan_name,
+                              amount: s.amount,
+                              currency: s.currency,
+                              cycle: s.cycle,
+                              status: s.status,
+                              start_date: s.start_date,
+                              end_date: s.end_date,
+                              notes: s.notes,
+                            }}
+                          />
+                          <DeleteSubscriptionButton id={s.id} />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

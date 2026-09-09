@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { WeeklySchedule } from "@/components/schedule/weekly-schedule";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "استعمال الزمن" };
@@ -23,8 +28,22 @@ export default async function ParentSchedulePage() {
   const supabase = await createClient();
 
   // RLS scopes `children` to the current parent's linked kids.
-  const { data: children } = await supabase.from("children").select("id");
+  const { data: children, error: childrenError } = await supabase
+    .from("children")
+    .select("id");
   const childIds = (children ?? []).map((c) => c.id);
+
+  if (childrenError) {
+    return (
+      <Shell>
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      </Shell>
+    );
+  }
 
   if (childIds.length === 0) {
     return (
@@ -64,6 +83,7 @@ export default async function ParentSchedulePage() {
     supabase.from("profiles").select("id, full_name").eq("role", "teacher"),
   ]);
 
+  const loadError = classroomsRes.error ?? slotsRes.error;
   const classrooms = classroomsRes.data ?? [];
   const slots = slotsRes.data ?? [];
   const teacherName = new Map(
@@ -72,6 +92,18 @@ export default async function ParentSchedulePage() {
       t.full_name,
     ]),
   );
+
+  if (loadError) {
+    return (
+      <Shell>
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      </Shell>
+    );
+  }
 
   return (
     <Shell>

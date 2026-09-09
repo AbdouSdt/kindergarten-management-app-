@@ -23,7 +23,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "block rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
               active
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",

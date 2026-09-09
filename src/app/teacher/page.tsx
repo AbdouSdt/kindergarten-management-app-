@@ -35,27 +35,37 @@ export default async function TeacherDashboardPage() {
     .in("id", classroomIds)
     .order("name");
 
-  const { data: enrollments } = await supabase
+  const { data: enrollments, error: enrollmentsError } = await supabase
     .from("child_classrooms")
     .select("child_id")
     .in("classroom_id", classroomIds);
   const childIds = [...new Set((enrollments ?? []).map((r) => r.child_id))];
 
   let presentToday = 0;
+  let presentFailed = false;
   if (childIds.length) {
-    const { count } = await supabase
+    const { count, error } = await supabase
       .from("attendance")
       .select("*", { count: "exact", head: true })
       .eq("date", today)
       .eq("status", "present")
       .in("child_id", childIds);
     presentToday = count ?? 0;
+    presentFailed = Boolean(error);
   }
 
   const stats = [
-    { title: "عدد فصولي", value: classroomIds.length },
-    { title: "عدد الأطفال في فصولي", value: childIds.length },
-    { title: "الحاضرون اليوم", value: presentToday },
+    { title: "عدد فصولي", value: classroomIds.length, failed: false },
+    {
+      title: "عدد الأطفال في فصولي",
+      value: childIds.length,
+      failed: false,
+    },
+    {
+      title: "الحاضرون اليوم",
+      value: presentToday,
+      failed: presentFailed || Boolean(enrollmentsError),
+    },
   ];
 
   const classroomNames = (classrooms ?? []).map((c) => c.name);
@@ -73,7 +83,13 @@ export default async function TeacherDashboardPage() {
         {stats.map((s) => (
           <Card key={s.title}>
             <CardTitle>{s.title}</CardTitle>
-            <CardValue>{s.value}</CardValue>
+            {s.failed ? (
+              <p className="mt-2 text-sm font-medium text-red-600" role="alert">
+                تعذّر تحميل هذا الرقم
+              </p>
+            ) : (
+              <CardValue>{s.value}</CardValue>
+            )}
           </Card>
         ))}
       </div>

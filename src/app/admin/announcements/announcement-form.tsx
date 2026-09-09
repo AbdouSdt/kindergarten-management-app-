@@ -4,11 +4,20 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, controlClass } from "@/components/ui/field";
+import { Modal } from "@/components/ui/modal";
 import type { FormState } from "@/lib/forms";
 
-import { createAnnouncement } from "./actions";
+import { createAnnouncement, updateAnnouncement } from "./actions";
 
 type ClassroomOption = { id: string; name: string };
+
+export type AnnouncementDefaults = {
+  id: string;
+  title: string;
+  body: string;
+  audience: string;
+  classroom_id: string | null;
+};
 
 const AUDIENCES = [
   { value: "all", label: "الجميع" },
@@ -18,31 +27,52 @@ const AUDIENCES = [
 
 export function AnnouncementForm({
   classrooms,
+  announcement,
 }: {
   classrooms: ClassroomOption[];
+  announcement?: AnnouncementDefaults;
 }) {
-  const [audience, setAudience] = useState("all");
+  const isEdit = Boolean(announcement);
+  const [open, setOpen] = useState(false);
+  const [audience, setAudience] = useState(announcement?.audience ?? "all");
   const [state, formAction, pending] = useActionState<FormState, FormData>(
-    createAnnouncement,
+    isEdit ? updateAnnouncement : createAnnouncement,
     null,
   );
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state?.ok) {
+    if (!state?.ok) return;
+    if (isEdit) {
+      setOpen(false);
+    } else {
       formRef.current?.reset();
       setAudience("all");
     }
-  }, [state]);
+  }, [state, isEdit]);
 
-  return (
+  const fields = (
     <form
       ref={formRef}
       action={formAction}
-      className="bg-card border-border space-y-4 rounded-lg border p-5"
+      className={
+        isEdit
+          ? "space-y-4"
+          : "bg-card border-border space-y-4 rounded-lg border p-5"
+      }
     >
+      {announcement && (
+        <input type="hidden" name="id" value={announcement.id} />
+      )}
+
       <Field label="العنوان" htmlFor="title" required>
-        <input id="title" name="title" required className={controlClass} />
+        <input
+          id="title"
+          name="title"
+          required
+          defaultValue={announcement?.title ?? ""}
+          className={controlClass}
+        />
       </Field>
 
       <Field label="النص" htmlFor="body" required>
@@ -51,6 +81,7 @@ export function AnnouncementForm({
           name="body"
           required
           rows={4}
+          defaultValue={announcement?.body ?? ""}
           className={`${controlClass} resize-y`}
         />
       </Field>
@@ -77,7 +108,7 @@ export function AnnouncementForm({
             <select
               id="classroom_id"
               name="classroom_id"
-              defaultValue=""
+              defaultValue={announcement?.classroom_id ?? ""}
               className={controlClass}
             >
               <option value="">— اختر الفصل —</option>
@@ -92,15 +123,49 @@ export function AnnouncementForm({
       </div>
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state?.ok && (
+      {state?.ok && !isEdit && (
         <p className="text-sm text-green-600">تم نشر الإعلان بنجاح.</p>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {isEdit && (
+          <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            إلغاء
+          </Button>
+        )}
         <Button type="submit" disabled={pending}>
-          {pending ? "جارٍ النشر..." : "نشر الإعلان"}
+          {isEdit
+            ? pending
+              ? "جارٍ الحفظ..."
+              : "حفظ"
+            : pending
+              ? "جارٍ النشر..."
+              : "نشر الإعلان"}
         </Button>
       </div>
     </form>
+  );
+
+  if (!isEdit) return fields;
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-primary text-sm font-medium hover:underline"
+      >
+        تعديل
+      </button>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="تعديل الإعلان"
+        description="حدّث عنوان الإعلان ونصه. تاريخ النشر وترتيبه لن يتغيّرا."
+      >
+        {fields}
+      </Modal>
+    </>
   );
 }

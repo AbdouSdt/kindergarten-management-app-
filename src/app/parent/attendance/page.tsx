@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
+import {
   ATTENDANCE_STATUS_LABEL,
   StatusBadge,
 } from "@/components/ui/status-badge";
@@ -40,7 +45,7 @@ export default async function ParentAttendancePage() {
   const supabase = await createClient();
 
   // RLS limits this to the signed-in parent's own children.
-  const { data: childrenData } = await supabase
+  const { data: childrenData, error: loadError } = await supabase
     .from("children")
     .select("id, first_name, last_name, classrooms(name)")
     .order("first_name");
@@ -76,11 +81,18 @@ export default async function ParentAttendancePage() {
         </p>
       </div>
 
-      {children.length === 0 && (
-        <p className="text-muted-foreground text-sm">
-          لا يوجد أطفال مرتبطون بحسابك بعد. يُرجى التواصل مع إدارة الحضانة.
-        </p>
-      )}
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : children.length === 0 ? (
+        <EmptyState
+          title="لا يوجد أطفال مرتبطون بحسابك بعد"
+          description="يُرجى التواصل مع إدارة الحضانة."
+        />
+      ) : null}
 
       <div className="space-y-6">
         {children.map((child) => {

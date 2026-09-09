@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -25,6 +30,7 @@ export default async function AdminAnnouncementsPage() {
     supabase.from("classrooms").select("id, name").order("name"),
   ]);
 
+  const loadError = announcementsRes.error;
   const announcements = announcementsRes.data ?? [];
   const classrooms = classroomsRes.data ?? [];
   const classroomName = new Map(classrooms.map((c) => [c.id, c.name]));
@@ -60,15 +66,36 @@ export default async function AdminAnnouncementsPage() {
                     : (AUDIENCE_LABEL[a.audience] ?? a.audience)}
                 </p>
               </div>
-              <DeleteAnnouncementButton id={a.id} />
+              <div className="flex shrink-0 items-center gap-3">
+                <AnnouncementForm
+                  classrooms={classrooms}
+                  announcement={{
+                    id: a.id,
+                    title: a.title,
+                    body: a.body,
+                    audience: a.audience,
+                    classroom_id: a.classroom_id,
+                  }}
+                />
+                <DeleteAnnouncementButton id={a.id} />
+              </div>
             </div>
             <p className="mt-2 text-sm whitespace-pre-line">{a.body}</p>
           </article>
         ))}
 
-        {announcements.length === 0 && (
-          <p className="text-muted-foreground text-sm">لا توجد إعلانات بعد.</p>
-        )}
+        {loadError ? (
+          <EmptyState
+            tone="error"
+            title={LOAD_ERROR_TITLE}
+            description={LOAD_ERROR_HINT}
+          />
+        ) : announcements.length === 0 ? (
+          <EmptyState
+            title="لا توجد إعلانات بعد"
+            description="أنشئ إعلاناً من النموذج أعلاه."
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { SidebarNav, type NavItem } from "@/components/nav/sidebar-nav";
+import { InstallPromptButton } from "@/components/pwa/install-prompt-button";
 
 type AppShellProps = {
   title: string;
@@ -12,12 +13,15 @@ type AppShellProps = {
 
 export function AppShell({ title, navItems, userName, children }: AppShellProps) {
   return (
-    <div className="flex min-h-screen">
-      <aside className="border-border bg-card hidden w-60 shrink-0 flex-col border-e p-4 md:flex">
-        <Link href="/" className="px-3 py-2 text-base font-semibold">
+    <div className="flex min-h-screen overflow-x-hidden">
+      <aside className="border-border bg-card hidden w-60 shrink-0 flex-col border-e px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] md:flex">
+        <Link
+          href="/"
+          className="flex min-h-[44px] items-center px-3 text-base font-semibold"
+        >
           {title}
         </Link>
-        <div className="mt-4 flex-1">
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
           <SidebarNav items={navItems} />
         </div>
         <div className="border-border space-y-2 border-t pt-4">
@@ -31,13 +35,21 @@ export function AppShell({ title, navItems, userName, children }: AppShellProps)
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="border-border bg-card flex items-center justify-between border-b px-6 py-3 md:hidden">
-          <Link href="/" className="text-base font-semibold">
+        <header className="border-border bg-card flex items-center justify-between gap-2 border-b px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:hidden">
+          <Link
+            href="/"
+            className="flex min-h-[44px] min-w-0 items-center truncate text-base font-semibold"
+          >
             {title}
           </Link>
-          <SignOutButton />
+          <div className="flex shrink-0 items-center gap-2">
+            <InstallPromptButton />
+            <SignOutButton />
+          </div>
         </header>
-        <main className="flex-1 p-6">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden px-4 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6">
+          {children}
+        </main>
       </div>
     </div>
   );

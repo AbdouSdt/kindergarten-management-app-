@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertAdmin } from "@/lib/auth";
 import type { FormState } from "@/lib/forms";
 import { createClient } from "@/lib/supabase/server";
-import { uploadChildPhoto } from "@/lib/storage";
+import { deleteChildPhoto, uploadChildPhoto } from "@/lib/storage";
 
 function revalidateChildren() {
   revalidatePath("/admin/children");
@@ -125,6 +125,75 @@ export async function createChild(
   return { ok: true };
 }
 
+export async function deleteChild(
+  id: string,
+): Promise<{ error?: string; ok?: boolean }> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { error: "غير مصرح لك بهذا الإجراء." };
+  }
+
+  if (!id) return { error: "معرّف الطفل مفقود." };
+
+  const supabase = await createClient();
+
+  // Re-derive dependents server-side — a hidden button is not enforcement.
+  // Guard here so a raw Postgres FK error never reaches the user.
+  const [guardiansRes, enrollRes, subsRes, attendanceRes] = await Promise.all([
+    supabase
+      .from("guardians")
+      .select("parent_id", { count: "exact", head: true })
+      .eq("child_id", id),
+    supabase
+      .from("child_classrooms")
+      .select("classroom_id", { count: "exact", head: true })
+      .eq("child_id", id),
+    supabase
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("child_id", id),
+    supabase
+      .from("attendance")
+      .select("id", { count: "exact", head: true })
+      .eq("child_id", id),
+  ]);
+
+  if (guardiansRes.error) return { error: guardiansRes.error.message };
+  if (enrollRes.error) return { error: enrollRes.error.message };
+  if (subsRes.error) return { error: subsRes.error.message };
+  if (attendanceRes.error) return { error: attendanceRes.error.message };
+
+  const blockers: string[] = [];
+  if ((guardiansRes.count ?? 0) > 0) blockers.push("أولياء أمور مرتبطون");
+  if ((enrollRes.count ?? 0) > 0) blockers.push("تسجيلات في فصول");
+  if ((subsRes.count ?? 0) > 0) blockers.push("اشتراكات");
+  if ((attendanceRes.count ?? 0) > 0) blockers.push("سجلات حضور");
+
+  if (blockers.length > 0) {
+    return {
+      error: `لا يمكن حذف الطفل لوجود ${blockers.join("، ")}. أزل هذه البيانات أولاً.`,
+    };
+  }
+
+  const { data: childRow } = await supabase
+    .from("children")
+    .select("photo_url")
+    .eq("id", id)
+    .maybeSingle();
+
+  const { error } = await supabase.from("children").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  // Best-effort: drop the now-orphaned photo object. Never fails the delete.
+  if (childRow?.photo_url) {
+    await deleteChildPhoto(childRow.photo_url);
+  }
+
+  revalidateChildren();
+  return { ok: true };
+}
+
 export async function updateChild(
   _prev: FormState,
   formData: FormData,
@@ -145,6 +214,7 @@ export async function updateChild(
     .filter(Boolean);
   const allergies = String(formData.get("allergies") ?? "").trim();
   const photo = formData.get("photo");
+  const removePhoto = formData.get("remove_photo") === "1";
 
   if (!childId || !firstName || !lastName || !dob) {
     return { error: "بيانات ناقصة." };
@@ -166,15 +236,40 @@ export async function updateChild(
 
   await setChildClassrooms(supabase, childId, classroomIds);
 
-  if (photo instanceof File && photo.size > 0) {
-    const res = await uploadChildPhoto(childId, photo);
+  const willReplacePhoto = photo instanceof File && photo.size > 0;
+  let previousPhotoUrl: string | null = null;
+  if (willReplacePhoto || removePhoto) {
+    const { data: existing } = await supabase
+      .from("children")
+      .select("photo_url")
+      .eq("id", childId)
+      .maybeSingle();
+    previousPhotoUrl = existing?.photo_url ?? null;
+  }
+
+  if (willReplacePhoto) {
+    // A new upload always wins over a "remove photo" request.
+    const res = await uploadChildPhoto(childId, photo as File);
     if (res.url) {
       await supabase
         .from("children")
         .update({ photo_url: res.url })
         .eq("id", childId);
+      // Best-effort: remove the object the new upload just superseded.
+      if (previousPhotoUrl && previousPhotoUrl !== res.url) {
+        await deleteChildPhoto(previousPhotoUrl);
+      }
     } else if (res.error) {
       return { error: `حُفظت البيانات، لكن تعذّر رفع الصورة: ${res.error}` };
+    }
+  } else if (removePhoto) {
+    await supabase
+      .from("children")
+      .update({ photo_url: null })
+      .eq("id", childId);
+    // Best-effort: drop the now-orphaned object.
+    if (previousPhotoUrl) {
+      await deleteChildPhoto(previousPhotoUrl);
     }
   }
 

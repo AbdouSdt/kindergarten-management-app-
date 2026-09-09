@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { getProfile, getTeacherClassroomIds } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
@@ -25,13 +30,13 @@ export default async function TeacherAttendancePage({
   const profile = await getProfile();
   const classroomIds = profile ? await getTeacherClassroomIds(profile.id) : [];
 
-  const { data: classrooms } = classroomIds.length
+  const { data: classrooms, error: loadError } = classroomIds.length
     ? await supabase
         .from("classrooms")
         .select("id, name")
         .in("id", classroomIds)
         .order("name")
-    : { data: [] as { id: string; name: string }[] };
+    : { data: [] as { id: string; name: string }[], error: null };
 
   const list = classrooms ?? [];
   const date = sp.date || todayISO();
@@ -81,10 +86,17 @@ export default async function TeacherAttendancePage({
         </p>
       </div>
 
-      {list.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لم تُسنَد إليك فصول بعد. تواصل مع الإدارة.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : list.length === 0 ? (
+        <EmptyState
+          title="لم تُسنَد إليك فصول بعد"
+          description="تواصل مع الإدارة."
+        />
       ) : (
         <TeacherAttendanceBoard
           key={`${selectedClassroom}-${date}`}

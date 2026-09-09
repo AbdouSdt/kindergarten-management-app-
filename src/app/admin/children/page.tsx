@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 
 import { Avatar } from "@/components/ui/avatar";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
 import { AddChildDialog } from "./add-child-dialog";
+import { DeleteChildButton } from "./delete-child-button";
 import { EditChildDialog } from "./edit-child-dialog";
 
 export const metadata: Metadata = { title: "الأطفال" };
@@ -27,9 +33,20 @@ export default async function AdminChildrenPage() {
         .eq("role", "parent")
         .order("full_name"),
       supabase.from("guardians").select("child_id, parent_id"),
-      supabase.from("child_classrooms").select("child_id, classroom_id, is_primary"),
+      supabase
+        .from("child_classrooms")
+        .select("child_id, classroom_id, is_primary"),
     ]);
 
+  const loadError = childrenRes.error;
+  // Secondary lookups feed the classroom-name and guardian columns; if any
+  // fails those cells would silently blank out, so flag it.
+  const lookupError = Boolean(
+    classroomsRes.error ||
+    parentsRes.error ||
+    guardiansRes.error ||
+    enrollRes.error,
+  );
   const children = childrenRes.data ?? [];
   const classrooms = classroomsRes.data ?? [];
   const parents = parentsRes.data ?? [];
@@ -76,76 +93,99 @@ export default async function AdminChildrenPage() {
         <AddChildDialog classrooms={classrooms} parents={parents} />
       </div>
 
-      <div className="border-border overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-muted text-muted-foreground text-start">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">الاسم</th>
-              <th className="px-4 py-2.5 font-medium">الفصول</th>
-              <th className="px-4 py-2.5 font-medium">أولياء الأمور</th>
-              <th className="px-4 py-2.5 font-medium">تاريخ الميلاد</th>
-              <th className="px-4 py-2.5 font-medium">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {children.map((child) => {
-              const names = parentsByChild.get(child.id) ?? [];
-              const enrolled = classroomsByChild.get(child.id);
-              return (
-                <tr key={child.id} className="border-border border-t align-top">
-                  <td className="px-4 py-3 font-medium">
-                    <span className="flex items-center gap-2.5">
-                      <Avatar
-                        src={child.photo_url}
-                        name={`${child.first_name} ${child.last_name}`}
-                        size={32}
-                      />
-                      {child.first_name} {child.last_name}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {enrolled?.names.filter(Boolean).length
-                      ? enrolled.names.filter(Boolean).join("، ")
-                      : "غير محدد"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {names.length ? (
-                      names.join("، ")
-                    ) : (
-                      <span className="text-muted-foreground">لا يوجد</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">{formatDate(child.date_of_birth)}</td>
-                  <td className="px-4 py-3">
-                    <EditChildDialog
-                      childId={child.id}
-                      classrooms={classrooms}
-                      defaults={{
-                        first_name: child.first_name,
-                        last_name: child.last_name,
-                        date_of_birth: child.date_of_birth,
-                        allergies: child.allergies,
-                        photo_url: child.photo_url,
-                        classroom_ids: enrolled?.ids ?? [],
-                      }}
-                    />
-                  </td>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : children.length === 0 ? (
+        <EmptyState
+          title="لا يوجد أطفال بعد"
+          description="اضغط «إضافة طفل» للبدء."
+        />
+      ) : (
+        <>
+          {lookupError && (
+            <EmptyState
+              tone="error"
+              title="تعذّر تحميل بعض البيانات المرتبطة"
+              description="قد لا تظهر أسماء الفصول أو أولياء الأمور كاملة. حدّث الصفحة."
+            />
+          )}
+          <div className="border-border overflow-x-auto rounded-lg border">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-muted text-muted-foreground text-start">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium">الاسم</th>
+                  <th className="px-4 py-2.5 font-medium">الفصول</th>
+                  <th className="px-4 py-2.5 font-medium">أولياء الأمور</th>
+                  <th className="px-4 py-2.5 font-medium">تاريخ الميلاد</th>
+                  <th className="px-4 py-2.5 font-medium">إجراءات</th>
                 </tr>
-              );
-            })}
-            {children.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="text-muted-foreground px-4 py-10 text-center"
-                >
-                  لا يوجد أطفال بعد. اضغط «إضافة طفل» للبدء.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {children.map((child) => {
+                  const names = parentsByChild.get(child.id) ?? [];
+                  const enrolled = classroomsByChild.get(child.id);
+                  return (
+                    <tr
+                      key={child.id}
+                      className="border-border border-t align-top"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        <span className="flex items-center gap-2.5">
+                          <Avatar
+                            src={child.photo_url}
+                            name={`${child.first_name} ${child.last_name}`}
+                            size={32}
+                          />
+                          {child.first_name} {child.last_name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {enrolled?.names.filter(Boolean).length
+                          ? enrolled.names.filter(Boolean).join("، ")
+                          : "غير محدد"}
+                      </td>
+                      <td className="px-4 py-3">
+                        {names.length ? (
+                          names.join("، ")
+                        ) : (
+                          <span className="text-muted-foreground">لا يوجد</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {formatDate(child.date_of_birth)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex items-center gap-3">
+                          <EditChildDialog
+                            childId={child.id}
+                            classrooms={classrooms}
+                            defaults={{
+                              first_name: child.first_name,
+                              last_name: child.last_name,
+                              date_of_birth: child.date_of_birth,
+                              allergies: child.allergies,
+                              photo_url: child.photo_url,
+                              classroom_ids: enrolled?.ids ?? [],
+                            }}
+                          />
+                          <DeleteChildButton
+                            id={child.id}
+                            name={`${child.first_name} ${child.last_name}`}
+                          />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

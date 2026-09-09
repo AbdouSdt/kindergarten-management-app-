@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, controlClass } from "@/components/ui/field";
@@ -33,27 +33,18 @@ export function AddParentDialog() {
   );
   const formRef = useRef<HTMLFormElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const [submitted, setSubmitted] = useState<{
-    email: string;
-    password: string;
-  } | null>(null);
+  // Captured at submit time from FormData — not read back from the DOM after the
+  // form (and its uncontrolled inputs) may have already been reset by React 19.
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (state?.ok && !submitted) {
-      const form = formRef.current;
-      const email =
-        (form?.elements.namedItem("email") as HTMLInputElement | null)?.value ??
-        "";
-      const password =
-        (form?.elements.namedItem("password") as HTMLInputElement | null)
-          ?.value ?? "";
-      setSubmitted({ email, password });
-    }
-  }, [state, submitted]);
+  const submitted =
+    state?.ok && state.password && submittedEmail !== null
+      ? { email: submittedEmail, password: state.password }
+      : null;
 
   function close() {
     setOpen(false);
-    setSubmitted(null);
+    setSubmittedEmail(null);
     formRef.current?.reset();
   }
 
@@ -94,7 +85,14 @@ export function AddParentDialog() {
             </div>
           </div>
         ) : (
-          <form ref={formRef} action={formAction} className="space-y-4">
+          <form
+            ref={formRef}
+            action={(formData) => {
+              setSubmittedEmail(String(formData.get("email") ?? ""));
+              formAction(formData);
+            }}
+            className="space-y-4"
+          >
             <Field label="الاسم الكامل" htmlFor="full_name" required>
               <input
                 id="full_name"

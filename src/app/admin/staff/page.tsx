@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 import { AddTeacherDialog } from "./add-teacher-dialog";
+import {
+  DeleteTeacherButton,
+  EditTeacherDialog,
+} from "./edit-teacher-dialog";
 import { ManageClassroomsDialog } from "./manage-classrooms-dialog";
 
 export const metadata: Metadata = { title: "الطاقم" };
@@ -22,6 +32,7 @@ export default async function AdminStaffPage() {
       .select("teacher_id, classroom_id"),
   ]);
 
+  const loadError = teachersRes.error;
   const teachers = teachersRes.data ?? [];
   const classrooms = classroomsRes.data ?? [];
   const assignments = assignmentsRes.data ?? [];
@@ -49,6 +60,9 @@ export default async function AdminStaffPage() {
 
   const allClassrooms = classrooms.map((c) => ({ id: c.id, name: c.name }));
 
+  const assignedFor = (teacherId: string) =>
+    (assignedByTeacher.get(teacherId) ?? []).filter((c) => c.name);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -61,56 +75,79 @@ export default async function AdminStaffPage() {
         <AddTeacherDialog classrooms={allClassrooms} />
       </div>
 
-      {teachers.length === 0 ? (
-        <p className="text-muted-foreground text-sm">لا يوجد أساتذة بعد.</p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : teachers.length === 0 ? (
+        <EmptyState
+          title="لا يوجد أساتذة بعد"
+          description="اضغط «إضافة أستاذ» لإنشاء أول حساب."
+        />
       ) : (
-        <div className="border-border overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-muted text-muted-foreground text-start">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">الاسم</th>
-                <th className="px-4 py-2.5 font-medium">البريد الإلكتروني</th>
-                <th className="px-4 py-2.5 font-medium">الهاتف</th>
-                <th className="px-4 py-2.5 font-medium">الفصول المسندة</th>
-                <th className="px-4 py-2.5 font-medium">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {teachers.map((t) => {
-                const assigned = (assignedByTeacher.get(t.id) ?? []).filter(
-                  (c) => c.name,
+        <ResponsiveTable
+          rows={teachers}
+          rowKey={(t) => t.id}
+          columns={[
+            {
+              key: "name",
+              header: "الاسم",
+              cell: (t) => (
+                <span className="font-medium">{t.full_name ?? "—"}</span>
+              ),
+            },
+            {
+              key: "email",
+              header: "البريد الإلكتروني",
+              cell: (t) => <span dir="ltr">{emailById.get(t.id) ?? "—"}</span>,
+            },
+            {
+              key: "phone",
+              header: "الهاتف",
+              cell: (t) => <span dir="ltr">{t.phone ?? "—"}</span>,
+            },
+            {
+              key: "classrooms",
+              header: "الفصول المسندة",
+              cell: (t) => {
+                const assigned = assignedFor(t.id);
+                return assigned.length ? (
+                  <span>{assigned.map((c) => c.name).join("، ")}</span>
+                ) : (
+                  <span className="text-muted-foreground">لا يوجد</span>
                 );
-                return (
-                  <tr key={t.id} className="border-border border-t align-top">
-                    <td className="px-4 py-3 font-medium">
-                      {t.full_name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3" dir="ltr">
-                      {emailById.get(t.id) ?? "—"}
-                    </td>
-                    <td className="px-4 py-3" dir="ltr">
-                      {t.phone ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {assigned.length ? (
-                        assigned.map((c) => c.name).join("، ")
-                      ) : (
-                        <span className="text-muted-foreground">لا يوجد</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ManageClassroomsDialog
-                        teacher={{ id: t.id, name: t.full_name ?? "الأستاذ" }}
-                        assigned={assigned}
-                        allClassrooms={allClassrooms}
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+            {
+              key: "actions",
+              header: "إجراءات",
+              labelled: false,
+              cell: (t) => (
+                <span className="flex flex-wrap items-center gap-3">
+                  <ManageClassroomsDialog
+                    teacher={{ id: t.id, name: t.full_name ?? "الأستاذ" }}
+                    assigned={assignedFor(t.id)}
+                    allClassrooms={allClassrooms}
+                  />
+                  <EditTeacherDialog
+                    teacher={{
+                      id: t.id,
+                      name: t.full_name ?? "",
+                      email: emailById.get(t.id) ?? "",
+                      phone: t.phone ?? "",
+                    }}
+                  />
+                  <DeleteTeacherButton
+                    id={t.id}
+                    name={t.full_name ?? "الأستاذ"}
+                  />
+                </span>
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 
 import { ScheduleEditor } from "./schedule-editor";
@@ -32,6 +37,7 @@ export default async function AdminSchedulePage({
       .order("full_name"),
   ]);
 
+  const loadError = classroomsRes.error;
   const classrooms = classroomsRes.data ?? [];
   const teachers = teachersRes.data ?? [];
 
@@ -69,10 +75,17 @@ export default async function AdminSchedulePage({
         </p>
       </div>
 
-      {classrooms.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لا توجد فصول بعد. أضف فصلاً أولاً.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : classrooms.length === 0 ? (
+        <EmptyState
+          title="لا توجد فصول بعد"
+          description="أضف فصلاً أولاً من صفحة الفصول."
+        />
       ) : (
         <ScheduleEditor
           key={selectedClassroom ?? "none"}

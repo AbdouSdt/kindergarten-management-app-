@@ -45,3 +45,45 @@ export async function uploadChildPhoto(
     .getPublicUrl(path);
   return { url: data.publicUrl };
 }
+
+/**
+ * Turn a public `child-photos` URL (as produced by `uploadChildPhoto`) back
+ * into its storage object path, e.g.
+ *   https://<proj>.supabase.co/storage/v1/object/public/child-photos/<id>/<ts>.jpg
+ *   -> "<id>/<ts>.jpg"
+ * Returns null when the URL is empty or not a child-photos object URL.
+ */
+export function childPhotoPathFromUrl(
+  photoUrl: string | null | undefined,
+): string | null {
+  if (!photoUrl) return null;
+  const marker = `/storage/v1/object/public/${CHILD_PHOTOS_BUCKET}/`;
+  const idx = photoUrl.indexOf(marker);
+  if (idx === -1) return null;
+  const path = photoUrl.slice(idx + marker.length).split("?")[0];
+  if (!path) return null;
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
+/**
+ * Best-effort removal of a child's photo object from the `child-photos` bucket,
+ * given its public URL. Never throws and never reports failure: the `children`
+ * row is the source of truth, and a leftover object is only cosmetic. Call from
+ * an admin-guarded Server Action after the DB mutation has been decided.
+ */
+export async function deleteChildPhoto(
+  photoUrl: string | null | undefined,
+): Promise<void> {
+  const path = childPhotoPathFromUrl(photoUrl);
+  if (!path) return;
+  try {
+    const supabase = await createClient();
+    await supabase.storage.from(CHILD_PHOTOS_BUCKET).remove([path]);
+  } catch {
+    // Swallow: storage cleanup must not fail the surrounding action.
+  }
+}

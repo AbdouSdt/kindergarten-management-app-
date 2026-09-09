@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
 
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -7,7 +12,7 @@ export const metadata: Metadata = { title: "الإعلانات" };
 
 export default async function ParentAnnouncementsPage() {
   const supabase = await createClient();
-  const { data: announcements } = await supabase
+  const { data: announcements, error: loadError } = await supabase
     .from("announcements")
     .select("id, title, body, published_at")
     .order("published_at", { ascending: false });
@@ -36,9 +41,15 @@ export default async function ParentAnnouncementsPage() {
             </p>
           </article>
         ))}
-        {(!announcements || announcements.length === 0) && (
-          <p className="text-muted-foreground text-sm">لا توجد إعلانات بعد.</p>
-        )}
+        {loadError ? (
+          <EmptyState
+            tone="error"
+            title={LOAD_ERROR_TITLE}
+            description={LOAD_ERROR_HINT}
+          />
+        ) : !announcements || announcements.length === 0 ? (
+          <EmptyState title="لا توجد إعلانات بعد" />
+        ) : null}
       </div>
     </div>
   );

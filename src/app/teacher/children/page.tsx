@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { Avatar } from "@/components/ui/avatar";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { getProfile, getTeacherClassroomIds } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -29,16 +34,18 @@ export default async function TeacherChildrenPage() {
     );
   }
 
-  const { data: classrooms } = await supabase
+  const { data: classrooms, error: classroomsError } = await supabase
     .from("classrooms")
     .select("id, name")
     .in("id", classroomIds);
   const classroomName = new Map((classrooms ?? []).map((c) => [c.id, c.name]));
 
-  const { data: enrollments } = await supabase
+  const { data: enrollments, error: enrollmentsError } = await supabase
     .from("child_classrooms")
     .select("child_id, classroom_id")
     .in("classroom_id", classroomIds);
+
+  const loadError = classroomsError ?? enrollmentsError;
 
   const classroomsByChild = new Map<string, string[]>();
   for (const row of enrollments ?? []) {
@@ -103,10 +110,14 @@ export default async function TeacherChildrenPage() {
         </p>
       </div>
 
-      {childrenList.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
-          لا يوجد أطفال في فصولك بعد.
-        </p>
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : childrenList.length === 0 ? (
+        <EmptyState title="لا يوجد أطفال في فصولك بعد" />
       ) : (
         <div className="border-border overflow-x-auto rounded-lg border">
           <table className="w-full min-w-[640px] text-sm">

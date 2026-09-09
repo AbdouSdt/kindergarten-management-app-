@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 
 import { WeeklySchedule } from "@/components/schedule/weekly-schedule";
+import {
+  EmptyState,
+  LOAD_ERROR_HINT,
+  LOAD_ERROR_TITLE,
+} from "@/components/ui/empty-state";
 import { getProfile, getTeacherClassroomIds } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -47,6 +52,7 @@ export default async function TeacherSchedulePage() {
     supabase.from("profiles").select("id, full_name").eq("role", "teacher"),
   ]);
 
+  const loadError = classroomsRes.error ?? slotsRes.error;
   const classrooms = classroomsRes.data ?? [];
   const slots = slotsRes.data ?? [];
   const teacherName = new Map(
@@ -59,35 +65,45 @@ export default async function TeacherSchedulePage() {
   return (
     <div className="space-y-6">
       <Header />
-      <div className="space-y-8">
-        {classrooms.map((room) => {
-          const roomSlots = slots
-            .filter((s) => s.classroom_id === room.id)
-            .map((s) => ({
-              id: s.id,
-              weekday: s.weekday,
-              starts_at: s.starts_at,
-              ends_at: s.ends_at,
-              title: s.title,
-              teacherName: s.teacher_id
-                ? (teacherName.get(s.teacher_id) ?? null)
-                : null,
-            }));
+      {loadError ? (
+        <EmptyState
+          tone="error"
+          title={LOAD_ERROR_TITLE}
+          description={LOAD_ERROR_HINT}
+        />
+      ) : classrooms.length === 0 ? (
+        <EmptyState title="لا توجد فصول مسندة إليك بعد" />
+      ) : (
+        <div className="space-y-8">
+          {classrooms.map((room) => {
+            const roomSlots = slots
+              .filter((s) => s.classroom_id === room.id)
+              .map((s) => ({
+                id: s.id,
+                weekday: s.weekday,
+                starts_at: s.starts_at,
+                ends_at: s.ends_at,
+                title: s.title,
+                teacherName: s.teacher_id
+                  ? (teacherName.get(s.teacher_id) ?? null)
+                  : null,
+              }));
 
-          return (
-            <section key={room.id} className="space-y-3">
-              <h2 className="text-lg font-medium">{room.name}</h2>
-              {roomSlots.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  لم يُضَف جدول لهذا الفصل بعد.
-                </p>
-              ) : (
-                <WeeklySchedule slots={roomSlots} />
-              )}
-            </section>
-          );
-        })}
-      </div>
+            return (
+              <section key={room.id} className="space-y-3">
+                <h2 className="text-lg font-medium">{room.name}</h2>
+                {roomSlots.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">
+                    لم يُضَف جدول لهذا الفصل بعد.
+                  </p>
+                ) : (
+                  <WeeklySchedule slots={roomSlots} />
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
