@@ -88,7 +88,7 @@ export function ScheduleEditor({
             type="button"
             onClick={() => router.push(`/admin/schedule?classroom=${c.id}`)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+              "flex min-h-[44px] items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors",
               c.id === selectedClassroom
                 ? "bg-primary text-primary-foreground border-transparent"
                 : "border-border hover:bg-muted",

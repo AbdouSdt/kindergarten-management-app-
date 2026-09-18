@@ -85,7 +85,7 @@ export function AttendanceBoard({
             type="button"
             onClick={() => navigate({ classroom: c.id })}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm transition-colors",
+              "flex min-h-[44px] items-center rounded-full border px-3.5 py-1.5 text-sm transition-colors",
               c.id === selectedClassroom
                 ? "bg-primary text-primary-foreground border-transparent"
                 : "border-border hover:bg-muted",
@@ -150,7 +150,7 @@ export function AttendanceBoard({
                       setStatuses((prev) => ({ ...prev, [c.id]: s.value }))
                     }
                     className={cn(
-                      "rounded-md px-3 py-1.5 text-sm transition-colors",
+                      "flex min-h-[44px] items-center rounded-md px-3.5 py-1.5 text-sm transition-colors",
                       statuses[c.id] === s.value
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted text-muted-foreground hover:text-foreground",
