@@ -228,9 +228,50 @@ the reference conversion, query untouched. RTL scan clean, no physical direction
 classes. Review PASS all gates.
 next: P1-7 (table→card sweep, 6 pages), P1-8 (schedule/attendance grids mobile).
 
+## 2026-09-09 — commit + Vercel deploy guide
+agent: — (orchestrator) + mobile-agent · status: done
+files: docs/deploy-vercel.md (new, uncommitted); commit 6914906 "PWA foundation +
+P0 completion" (63 files) — NOT pushed, user's call.
+notes: User picked Vercel for hosting. Guide covers import, the 4 env vars
+(placeholders only), the NEXT_PUBLIC_SITE_URL chicken/egg, post-deploy checks,
+Supabase Auth URL config. P2 stays blocked until the user pushes + deploys +
+returns the production URL.
+next: P2-2 (Capacitor shell) once the URL exists.
+
+## 2026-09-17 — Deployed to Vercel (P2-1)
+agent: — (user, guided by orchestrator) · status: done
+files: none (ops only)
+notes: Deploy hit 3 issues in sequence, all resolved: (1) NEXT_PUBLIC_* vars set
+as Vercel "Sensitive" type aren't inlined at build time → middleware crashed with
+"Invalid supabaseUrl"; fixed by re-adding as plain Config vars. (2) Git repo was
+connected to Vercel after the initial commit, so no deployment ever triggered —
+fixed with an empty commit + push to fire the webhook. (3) trailing
+whitespace/quotes risk in copy-pasted Supabase URL — re-copied via Supabase
+dashboard. Production URL confirmed working end-to-end by the user.
+next: production URL = https://kindergarten-management-app.vercel.app/ — needed
+for P2-2 (Capacitor).
+
+## 2026-09-17 — Currency MAD → DZD (P0-15)
+agent: feature-agent · status: done
+files: src/lib/currency.ts (new), src/app/admin/subscriptions/{page.tsx,
+subscription-dialog.tsx,actions.ts}, src/app/parent/subscription/page.tsx
+notes: New formatCurrency(amount) renders grouped-number + literal «د.ج»,
+ignoring the stored currency column entirely — so existing rows with
+currency='MAD' display correctly too, no migration needed. New/edited
+subscriptions now default to storing "DZD". Review PASS, zero remaining
+MAD/د.م hits in src/. Fix is LOCAL ONLY — not yet pushed/deployed.
+next: P0-16 added — subscriptions.currency column + dialog input are now
+vestigial, decide keep vs. drop.
+
 ## HANDOFF
-in flight: nothing — P1-1, P0-14, P1-2, P1-3, P1-4 all done and reviewed this
-session (5 items).
+in flight: nothing — P1-1, P0-14, P1-2, P1-3, P1-4, P2-1, P0-15 done this
+session; P0-15 fix is committed... NO — check before assuming, it may still be
+uncommitted (verify with `git status` next session).
+state: production is live at https://kindergarten-management-app.vercel.app/
+but does NOT yet have the P0-15 currency fix (that's local/uncommitted). User
+must commit + push + Vercel auto-redeploys before the site shows DZD.
+next item: get the currency fix pushed live, then P2-2 (Capacitor Android shell)
+now that the production URL exists. Remaining non-blocking: P1-5..P1-8, P0-16.
 state: P1 core landed — app is installable (manifest + install button), offline-
 capable (SW, no authed HTML cached), and has a mobile shell (safe area, bottom
 sheets, 44px targets, ResponsiveTable). Remaining P1 is repetitive per-page
@@ -243,3 +284,123 @@ Working tree holds every uncommitted change from P0-6 onward + all P1 work —
 nothing committed this session (no commit requested).
 next item: P1-7 (table→card sweep) — or P2-1 once the user gives hosting + URL.
 Start a fresh session and run /dev-loop.
+
+## 2026-09-17 — Currency fix MAD→DZD (P0-15)
+agent: feature-agent (already implemented before this session; review-agent verified)
+· status: done
+files: src/lib/currency.ts (new), src/app/admin/subscriptions/{actions.ts,
+page.tsx,subscription-dialog.tsx}, src/app/parent/subscription/page.tsx
+notes: Shared formatCurrency() in src/lib/currency.ts (Intl.NumberFormat, no new
+dep) renders DZD/«د.ج» everywhere; no per-page reimplementation. Grep confirmed
+zero remaining MAD/د.م/درهم in src/. Gates green (type-check/lint/build).
+Minor non-blocking nit: subscription-dialog.tsx still has a free-text `currency`
+DB field the UI ignores when displaying — not in scope, flagged for later if the
+app stays single-currency (candidate: hide/remove that input).
+docs/deploy-vercel.md remains untracked from the 2026-09-09 session, unrelated
+to this item — still just sitting there, not yet committed or discarded.
+next: P0-16 filed — vestigial currency column/input cleanup.
+
+## 2026-09-17 — Vestigial currency field removed (P0-16)
+agent: feature-agent · status: done
+files: src/app/admin/subscriptions/{subscription-dialog.tsx,actions.ts}
+notes: Decision taken without asking the user (low-risk, reversible): kept the
+`subscriptions.currency` DB column as-is (no migration — app is single-currency,
+not worth the churn), removed the dead free-text currency input from the dialog,
+createSubscription/updateSubscription now write currency:'DZD' as a literal
+instead of trusting client formData. Review PASS, scope tight (2 files only).
+next: —
+
+NOTE for next session: this session found .claude/BACKLOG.md and
+.claude/PROGRESS.md had been edited by something else mid-run (a P0-15 log
+block + a since-stale HANDOFF appeared between reads, before any commit was
+made) — likely another Claude Code session open on this same working
+directory. No conflicting code changes resulted this time, but if you see
+duplicate/out-of-order entries above, that's why. Worth checking whether
+another /dev-loop session is running in parallel before continuing.
+
+## 2026-09-17 — Install-prompt polish (P1-6)
+agent: feature-agent · status: done
+files: src/components/pwa/install-prompt-button.tsx
+notes: try/catch/finally around prompt()/userChoice; finally unconditionally
+clears the captured beforeinstallprompt event, so the button disappears after
+one click on accept, dismiss, or a rejected/thrown promise. Decided against a
+desktop/sidebar mount — desktop Chrome/Edge already show a native install
+affordance in the omnibox; button stays md:hidden (mobile-only), confirmed in
+app-shell.tsx. Review PASS: type-check/lint/build clean, diff scoped to one
+file.
+next: —
+
+## 2026-09-17 — Manifest/icon head tags + real icon artwork (P1-5)
+agent: mobile-agent · status: done
+files: src/app/layout.tsx, public/icons/{icon-192,icon-512,
+icon-maskable-192,icon-maskable-512}.png
+notes: layout.tsx metadata/viewport exports now emit manifest link,
+apple-touch-icon, sized icon links, and theme-color (#2563eb, matches
+globals.css/manifest.ts) via Next 15 Metadata API. No brand logo existed in
+repo, so new artwork was generated (white graduation-cap glyph on full-bleed
+brand-color background; maskable variants scaled down to stay inside
+Android's safe zone) via a throwaway script, deleted after use — no new
+dependency. manifest.ts icon filenames untouched. Review PASS: verified
+prerendered head tags, valid PNG dimensions, type-check/lint/build clean, diff
+scoped to the 2 file groups.
+next: —
+
+## 2026-09-17 — Schedule + attendance grid mobile (P1-8)
+agent: ui-agent · status: done
+files: src/app/admin/schedule/schedule-editor.tsx,
+src/app/admin/attendance/attendance-board.tsx,
+src/app/admin/attendance/page.tsx,
+src/app/teacher/attendance/teacher-attendance-board.tsx
+notes: weekly-schedule.tsx already stacked per-day below sm (pre-existing from
+P1-4), and attendance boards already used wrapped per-child buttons rather
+than a true grid, so no restructuring was needed. Real gap was touch-target
+size — bumped classroom pills/status buttons/history link to min-h-[44px].
+RTL scroll direction confirmed correct via dir="rtl" on <html>. Review PASS:
+build/type-check/lint clean, diff scoped, zero overlap with parallel P1-7.
+next: optional polish — scroll-shadow affordance for weekly-schedule.tsx's
+tablet-portrait horizontal scroll (not blocking, not filed as a new item).
+
+## 2026-09-17 — Table→card sweep (P1-7)
+agent: ui-agent · status: done
+files: src/app/admin/children/page.tsx, src/app/admin/parents/page.tsx,
+src/app/admin/classrooms/page.tsx, src/app/admin/subscriptions/page.tsx,
+src/app/admin/attendance/history/page.tsx, src/app/teacher/children/page.tsx
+notes: Mechanical <table> -> ResponsiveTable conversion on all 6 pages,
+columns/actions/empty/error states preserved. classrooms page's error+empty
+render was a pre-existing non-exclusive bug, now a single error/empty/table
+ternary. attendance/history header badges became plain text
+(ATTENDANCE_STATUS_LABEL) because ResponsiveColumn.header has no render hook
+— cosmetic only, cell data untouched.
+Review initially reported a "blocker" (currency field removal / hardcoded
+DZD / new currency.ts as unauthorized scope creep on subscriptions/actions.ts
++ subscription-dialog.tsx + parent/subscription/page.tsx) — this was a
+misattribution: those are small pre-existing diffs from the earlier P0-15/
+P0-16 session (already reviewed PASS, logged above), not new work by this
+agent. Confirmed via `git diff --stat`: this agent's own file
+(subscriptions/page.tsx) has a 144-line table-rewrite diff; actions.ts (7
+lines) and subscription-dialog.tsx (35 lines) match P0-16's already-logged
+scope exactly. Root cause: nothing has been committed all session, so a
+review agent's git diff aggregates every prior session's uncommitted work
+together and can misattribute it to whichever item it's reviewing.
+next: recommend to the user that reviewed/passed items get committed
+periodically, so future review-agent diffs stay scoped to just the item under
+test instead of the whole accumulated working tree.
+
+## HANDOFF
+in flight: nothing — P1-5, P1-6, P1-7, P1-8 all done this session. P1 (PWA)
+section is now fully complete.
+state: app is installable, offline-capable, has real branded icons + proper
+head tags, install-prompt is hardened, and every list/table page plus every
+schedule/attendance grid is mobile-usable (cards or 44px touch targets, no
+horizontal page overflow). Production is live at
+https://kindergarten-management-app.vercel.app/ (P2-1 done) but the working
+tree still has NOTHING committed all session — every P0/P1 change since
+2026-09-08 is uncommitted. Recommend committing the reviewed, passed work
+before starting P2, both to ship it and so future review-agent diffs stay
+scoped to just the item under review instead of the whole accumulated tree
+(this session hit a false-positive review "blocker" for exactly that reason,
+see P1-7 entry above).
+next item: P2-2 (Capacitor Android shell) — ready, deps (P2-1) met. This is a
+meaningfully different phase (native tooling, Gradle, Android SDK) — start it
+in a fresh session.
+Start a fresh session and run /dev-loop again.

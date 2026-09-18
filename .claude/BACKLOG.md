@@ -90,6 +90,19 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   `0` (attendance query is skipped because `childIds` is empty). Propagate the
   enrollments error to that tile's hint too. · _ui-agent_ · deps: P0-6
 
+- [x] **P0-15** — Currency is wrong: subscription/payment amounts display
+  **MAD** (Moroccan dirham) but must display **DZD** (Algerian dinar) — found
+  live in production by the user. · _feature-agent_
+
+- [x] **P0-16** — Vestigial currency field: the `subscriptions.currency` DB
+  column and the admin dialog's free-text currency input are no longer read by
+  any display path (P0-15 hardcoded «د.ج» everywhere) — keep the column (no
+  migration, app is single-currency, not worth the churn) but remove the
+  free-text input from `subscription-dialog.tsx`; `createSubscription` /
+  `updateSubscription` in `src/app/admin/subscriptions/actions.ts` should write
+  `currency: 'DZD'` server-side instead of trusting a client field.
+  · _feature-agent_ · deps: P0-15
+
 ## P1 — PWA
 
 - [x] **P1-1** — PWA foundation: `src/app/manifest.ts`, maskable icons
@@ -104,12 +117,12 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   «ثبّت التطبيق» button in the shell, hide it once installed.
   · _feature-agent_ · deps: P1-1
 
-- [ ] **P1-5** — Reference the manifest + `apple-touch-icon` + `<meta
+- [x] **P1-5** — Reference the manifest + `apple-touch-icon` + `<meta
   name="theme-color">` from the root layout; replace the four placeholder icon
   PNGs in `public/icons/` with real branded artwork (full-bleed 512 maskable,
   optional monochrome). · _mobile-agent_ · deps: P1-1
 
-- [ ] **P1-6** — Install-prompt polish: wrap `installEvent.prompt()` in the
+- [x] **P1-6** — Install-prompt polish: wrap `installEvent.prompt()` in the
   click handler of `src/components/pwa/install-prompt-button.tsx` in try/catch so
   a rejected prompt still clears the stale button; decide whether the
   «ثبّت التطبيق» button also needs a desktop/sidebar mount (currently `md:hidden`
@@ -122,13 +135,13 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   bottom-sheet `Modal`, 44px `Button`/`Field`/nav, new `ResponsiveTable`, and
   `/admin/staff` as the reference conversion. Per-page work filed as P1-7, P1-8.
 
-- [ ] **P1-7** — Table→card sweep: apply the `ResponsiveTable` pattern from
+- [x] **P1-7** — Table→card sweep: apply the `ResponsiveTable` pattern from
   `src/app/admin/staff/page.tsx` to the remaining list pages — `admin/children`,
   `admin/parents`, `admin/classrooms`, `admin/subscriptions`,
   `admin/attendance/history`, `teacher/children`. Presentation only, keep each
   Server Component query. · _ui-agent_ · deps: P1-4
 
-- [ ] **P1-8** — Schedule + attendance grid mobile: the wide grid views need a
+- [x] **P1-8** — Schedule + attendance grid mobile: the wide grid views need a
   scroll affordance or stacking on narrow widths —
   `admin/schedule/schedule-editor.tsx`, `teacher/schedule`, `parent/schedule`,
   `admin/attendance`, `teacher/attendance`, `parent/attendance`. · _ui-agent_ ·
@@ -136,9 +149,10 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
 
 ## P2 — Android APK
 
-- [ ] **P2-1** — Deploy the app and record the production URL in an env var.
-  Needs the user: hosting choice and the deployed URL. · _mobile-agent_ ·
-  deps: P1-2
+- [x] **P2-1** — Deploy the app and record the production URL in an env var.
+  Needs the user: hosting choice and the deployed URL. Hosting = **Vercel**.
+  Production URL: `https://kindergarten-management-app.vercel.app/` — confirmed
+  live by the user 2026-09-17. · _mobile-agent_ · deps: P1-2
 
 - [ ] **P2-2** — Capacitor Android shell: `capacitor.config.ts` pointing at the
   deployed URL over https, `npx cap add android`, `@capacitor/app` for the
