@@ -25,7 +25,7 @@ export default async function AdminParentsPage() {
       .order("full_name"),
     supabase
       .from("children")
-      .select("id, first_name, last_name, classrooms(name)")
+      .select("id, first_name, last_name, classrooms!children_classroom_id_fkey(name)")
       .order("first_name"),
     supabase.from("guardians").select("parent_id, child_id, relationship"),
   ]);

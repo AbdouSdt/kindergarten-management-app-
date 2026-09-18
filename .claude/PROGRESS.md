@@ -428,3 +428,9 @@ agent: feature-agent · status: done
 files: src/app/parent/page.tsx, src/app/parent/attendance/page.tsx
 notes: Found on device (APK), reproduces on web too. Root cause PGRST201: children↔classrooms became ambiguous once migration 0003 added child_classrooms; fixed by naming the FK `classrooms!children_classroom_id_fkey(name)`. Not an RLS or APK issue. Review PASS (type-check, lint, build).
 next: P2-6 (same embed in src/app/admin/parents/page.tsx:28)
+
+## 2026-09-18 — P2-6 Admin parents page ambiguous embed
+agent: feature-agent · status: done
+files: src/app/admin/parents/page.tsx
+notes: Same PGRST201 fix as P2-5 (`classrooms!children_classroom_id_fkey(name)`). Verified live as the admin test user (old select errors, new returns 10 rows). Sweep of src/ finds no other un-hinted children→classrooms embed. Review PASS.
+next: user re-installs the APK (or reloads) and confirms parent home shows children, then finishes the three-role walkthrough to tick P2-3

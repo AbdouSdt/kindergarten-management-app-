@@ -178,10 +178,11 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   → done 2026-09-18; cause was PGRST201 (ambiguous children↔classrooms embed
   after migration 0003), fixed with `classrooms!children_classroom_id_fkey(name)`.
 
-- [ ] **P2-6** — Same ambiguous embed on the admin side: `src/app/admin/parents/page.tsx:28`
+- [x] **P2-6** — Same ambiguous embed on the admin side: `src/app/admin/parents/page.tsx:28`
   uses `children` → `classrooms(name)` and fails with PGRST201 like P2-5 did.
   Use `classrooms!children_classroom_id_fkey(name)`; verify the admin parents page
   lists each parent's children. · _feature-agent_ · deps: P2-5
+  → done 2026-09-18; live check as admin: old select PGRST201, new returns rows.
 
 - [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.
