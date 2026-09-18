@@ -47,3 +47,19 @@ next-env.d.ts
 # supabase
 /supabase/.branches
 /supabase/.temp
+
+# android (Capacitor shell) - source tree in android/ IS committed, build output is not
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/captures/
+/android/.idea/
+/android/**/*.iml
+/android/.cxx/
+*.apk
+*.aab
+# release signing - never commit (see docs/android-release.md)
+keystore.properties
+*.jks
+*.keystore

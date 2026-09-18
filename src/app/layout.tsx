@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 
+import { NativeBackButton } from "@/components/pwa/native-back-button";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className="min-h-screen font-sans antialiased">
         {children}
         <ServiceWorkerRegister />
+        <NativeBackButton />
       </body>
     </html>
   );

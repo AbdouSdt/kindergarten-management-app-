@@ -154,16 +154,23 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   Production URL: `https://kindergarten-management-app.vercel.app/` — confirmed
   live by the user 2026-09-17. · _mobile-agent_ · deps: P1-2
 
-- [ ] **P2-2** — Capacitor Android shell: `capacitor.config.ts` pointing at the
+- [x] **P2-2** — Capacitor Android shell: `capacitor.config.ts` pointing at the
   deployed URL over https, `npx cap add android`, `@capacitor/app` for the
   hardware back button, Arabic app label, adaptive icon and splash, `.gitignore`
   entries for the Gradle build output. · _mobile-agent_ · deps: P2-1
+  → done 2026-09-18; appId `dz.creche.app`, server URL overridable via
+  `CAPACITOR_SERVER_URL` at `cap sync` time.
 
 - [ ] **P2-3** — Debug APK: `./gradlew assembleDebug`, install on a device,
-  walk the three roles end to end. · _mobile-agent_ · deps: P2-2
+  walk the three roles end to end. Also verify the splash
+  `windowSplashScreenBackground` style and adaptive icon render, and rename the
+  template test packages `com.getcapacitor.myapp` → `dz.creche.app`.
+  · _mobile-agent_ · deps: P2-2
 
 - [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.
+  Also set `android:allowBackup="false"` in `AndroidManifest.xml` (WebView holds
+  cookie auth) and fix the `.gitignore` comment that already points at this doc.
   · _mobile-agent_ · deps: P2-3
 
 ## P3 — later

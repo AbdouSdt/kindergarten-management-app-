@@ -404,3 +404,9 @@ next item: P2-2 (Capacitor Android shell) — ready, deps (P2-1) met. This is a
 meaningfully different phase (native tooling, Gradle, Android SDK) — start it
 in a fresh session.
 Start a fresh session and run /dev-loop again.
+
+## 2026-09-18 — P2-2 Capacitor Android shell
+agent: mobile-agent · status: done
+files: capacitor.config.ts, capacitor-www/index.html, package.json, package-lock.json, .gitignore, .env.example, src/components/pwa/native-back-button.tsx, src/app/layout.tsx, android/**
+notes: appId dz.creche.app, Arabic label «منصة الروضة». Server URL defaults to the Vercel URL; dedicated CAPACITOR_SERVER_URL override (https-only), not NEXT_PUBLIC_SITE_URL which is localhost in dev. Icons/splash generated from public/icons. Gradle not run yet.
+next: P2-3 (verify splash style, rename template test packages); P2-4 (allowBackup=false, gitignore comment)
