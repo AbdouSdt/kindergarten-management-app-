@@ -24,7 +24,6 @@ type ParsedForm = {
   childId: string;
   planName: string;
   amount: number;
-  currency: string;
   cycle: Cycle;
   status: Status;
   startDate: string;
@@ -36,7 +35,6 @@ function parseForm(formData: FormData): ParsedForm | { error: string } {
   const childId = String(formData.get("child_id") ?? "").trim();
   const planName = String(formData.get("plan_name") ?? "").trim();
   const amountRaw = String(formData.get("amount") ?? "").trim();
-  const currency = String(formData.get("currency") ?? "").trim() || "MAD";
   const cycle = String(formData.get("cycle") ?? "") as Cycle;
   const status = String(formData.get("status") ?? "") as Status;
   const startDate = String(formData.get("start_date") ?? "").trim();
@@ -65,7 +63,6 @@ function parseForm(formData: FormData): ParsedForm | { error: string } {
     childId,
     planName,
     amount,
-    currency,
     cycle,
     status,
     startDate,
@@ -93,7 +90,7 @@ export async function createSubscription(
     child_id: parsed.childId,
     plan_name: parsed.planName,
     amount: parsed.amount,
-    currency: parsed.currency,
+    currency: "DZD",
     cycle: parsed.cycle,
     status: parsed.status,
     start_date: parsed.startDate,
@@ -131,7 +128,7 @@ export async function updateSubscription(
       child_id: parsed.childId,
       plan_name: parsed.planName,
       amount: parsed.amount,
-      currency: parsed.currency,
+      currency: "DZD",
       cycle: parsed.cycle,
       status: parsed.status,
       start_date: parsed.startDate,

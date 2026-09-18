@@ -174,29 +174,18 @@ export function SubscriptionDialog({
             />
           </Field>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="المبلغ" htmlFor="amount" required>
-              <input
-                id="amount"
-                name="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                defaultValue={subscription ? String(subscription.amount) : ""}
-                className={controlClass}
-              />
-            </Field>
-
-            <Field label="العملة" htmlFor="currency">
-              <input
-                id="currency"
-                name="currency"
-                defaultValue={subscription?.currency ?? "MAD"}
-                className={controlClass}
-              />
-            </Field>
-          </div>
+          <Field label="المبلغ" htmlFor="amount" required>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              defaultValue={subscription ? String(subscription.amount) : ""}
+              className={controlClass}
+            />
+          </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="الدورة" htmlFor="cycle" required>

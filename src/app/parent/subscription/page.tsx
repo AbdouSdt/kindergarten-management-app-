@@ -6,6 +6,7 @@ import {
   LOAD_ERROR_HINT,
   LOAD_ERROR_TITLE,
 } from "@/components/ui/empty-state";
+import { formatCurrency } from "@/lib/currency";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 
@@ -113,7 +114,7 @@ export default async function ParentSubscriptionPage() {
                           <div className="flex justify-between gap-4">
                             <dt>المبلغ</dt>
                             <dd className="text-foreground">
-                              {s.amount} {s.currency}
+                              {formatCurrency(s.amount)}
                             </dd>
                           </div>
                           <div className="flex justify-between gap-4">

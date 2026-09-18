@@ -6,6 +6,8 @@ import {
   LOAD_ERROR_HINT,
   LOAD_ERROR_TITLE,
 } from "@/components/ui/empty-state";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { formatCurrency } from "@/lib/currency";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
 import type { Database } from "@/types/database.types";
@@ -90,26 +92,13 @@ export default async function AdminSubscriptionsPage() {
     0,
   );
 
-  const currencyCounts = new Map<string, number>();
-  for (const s of activeSubs) {
-    currencyCounts.set(s.currency, (currencyCounts.get(s.currency) ?? 0) + 1);
-  }
-  let revenueCurrency = "MAD";
-  let topCount = 0;
-  for (const [cur, count] of currencyCounts) {
-    if (count > topCount) {
-      topCount = count;
-      revenueCurrency = cur;
-    }
-  }
-
   const stats = [
     { title: "اشتراكات نشطة", value: String(activeCount) },
     { title: "متأخرة", value: String(overdueCount) },
     { title: "موقوفة", value: String(pausedCount) },
     {
       title: "الإيراد الشهري التقديري",
-      value: `${Math.round(monthlyRevenue)} ${revenueCurrency}`,
+      value: formatCurrency(Math.round(monthlyRevenue)),
     },
   ];
 
@@ -151,65 +140,80 @@ export default async function AdminSubscriptionsPage() {
               description="قد لا تظهر أسماء الأطفال أو الفصول بشكل صحيح. حدّث الصفحة."
             />
           )}
-          <div className="border-border overflow-x-auto rounded-lg border">
-            <table className="w-full min-w-[820px] text-sm">
-              <thead className="bg-muted text-muted-foreground text-start">
-                <tr>
-                  <th className="px-4 py-2.5 font-medium">الطفل</th>
-                  <th className="px-4 py-2.5 font-medium">الخطة</th>
-                  <th className="px-4 py-2.5 font-medium">المبلغ</th>
-                  <th className="px-4 py-2.5 font-medium">الدورة</th>
-                  <th className="px-4 py-2.5 font-medium">الحالة</th>
-                  <th className="px-4 py-2.5 font-medium">البداية</th>
-                  <th className="px-4 py-2.5 font-medium">النهاية</th>
-                  <th className="px-4 py-2.5 font-medium">إجراءات</th>
-                </tr>
-              </thead>
-              <tbody>
-                {subscriptions.map((s) => {
+          <ResponsiveTable
+            rows={subscriptions}
+            rowKey={(s) => s.id}
+            columns={[
+              {
+                key: "child",
+                header: "الطفل",
+                cell: (s) => (
+                  <span className="font-medium">
+                    {childName.get(s.child_id) ?? "طفل غير معروف"}
+                  </span>
+                ),
+              },
+              {
+                key: "plan",
+                header: "الخطة",
+                cell: (s) => s.plan_name,
+              },
+              {
+                key: "amount",
+                header: "المبلغ",
+                cell: (s) => formatCurrency(s.amount),
+              },
+              {
+                key: "cycle",
+                header: "الدورة",
+                cell: (s) => CYCLE_LABEL[s.cycle],
+              },
+              {
+                key: "status",
+                header: "الحالة",
+                cell: (s) => <StatusPill status={s.status} />,
+              },
+              {
+                key: "start",
+                header: "البداية",
+                cell: (s) => formatDate(s.start_date),
+              },
+              {
+                key: "end",
+                header: "النهاية",
+                cell: (s) => (s.end_date ? formatDate(s.end_date) : "—"),
+              },
+              {
+                key: "actions",
+                header: "إجراءات",
+                labelled: false,
+                cell: (s) => {
                   const name = childName.get(s.child_id) ?? "طفل غير معروف";
                   return (
-                    <tr key={s.id} className="border-border border-t align-top">
-                      <td className="px-4 py-3 font-medium">{name}</td>
-                      <td className="px-4 py-3">{s.plan_name}</td>
-                      <td className="px-4 py-3">
-                        {s.amount} {s.currency}
-                      </td>
-                      <td className="px-4 py-3">{CYCLE_LABEL[s.cycle]}</td>
-                      <td className="px-4 py-3">
-                        <StatusPill status={s.status} />
-                      </td>
-                      <td className="px-4 py-3">{formatDate(s.start_date)}</td>
-                      <td className="px-4 py-3">
-                        {s.end_date ? formatDate(s.end_date) : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-3">
-                          <SubscriptionDialog
-                            childrenList={childOptions}
-                            subscription={{
-                              id: s.id,
-                              child_id: s.child_id,
-                              child_name: name,
-                              plan_name: s.plan_name,
-                              amount: s.amount,
-                              currency: s.currency,
-                              cycle: s.cycle,
-                              status: s.status,
-                              start_date: s.start_date,
-                              end_date: s.end_date,
-                              notes: s.notes,
-                            }}
-                          />
-                          <DeleteSubscriptionButton id={s.id} />
-                        </span>
-                      </td>
-                    </tr>
+                    <span className="flex items-center gap-3">
+                      <SubscriptionDialog
+                        childrenList={childOptions}
+                        subscription={{
+                          id: s.id,
+                          child_id: s.child_id,
+                          child_name: name,
+                          plan_name: s.plan_name,
+                          amount: s.amount,
+                          currency: s.currency,
+                          cycle: s.cycle,
+                          status: s.status,
+                          start_date: s.start_date,
+                          end_date: s.end_date,
+                          notes: s.notes,
+                        }}
+                      />
+                      <DeleteSubscriptionButton id={s.id} />
+                    </span>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+            ]}
+          />
         </>
       )}
     </div>
