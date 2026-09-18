@@ -41,9 +41,15 @@ export function InstallPromptButton() {
   if (!installEvent) return null;
 
   const onClick = async () => {
-    await installEvent.prompt();
-    await installEvent.userChoice;
-    setInstallEvent(null);
+    try {
+      await installEvent.prompt();
+      await installEvent.userChoice;
+    } catch {
+      // Prompt rejected (dismissed via browser chrome) or event went stale.
+      // Fall through to clearing the captured event either way.
+    } finally {
+      setInstallEvent(null);
+    }
   };
 
   return (
