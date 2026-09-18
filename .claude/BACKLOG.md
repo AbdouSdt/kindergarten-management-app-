@@ -169,6 +169,20 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   → agent side done 2026-09-18 (APK builds/installs, packages renamed, splash +
   icon verified); only the user's on-device three-role walkthrough remains.
 
+- [x] **P2-5** — Parent home «أطفالي» fails to load: found on device during the P2-3
+  walkthrough — `/parent` shows the error state «تعذّر تحميل قائمة الأطفال» while
+  announcements load fine, so the children query itself errors (not an empty
+  list). Find the root cause (app query vs RLS on children/guardians) and fix it;
+  say whether it also reproduces on the web. · _feature-agent_ (hand to
+  _db-agent_ if the cause is RLS/schema) · blocks P2-3 tick
+  → done 2026-09-18; cause was PGRST201 (ambiguous children↔classrooms embed
+  after migration 0003), fixed with `classrooms!children_classroom_id_fkey(name)`.
+
+- [ ] **P2-6** — Same ambiguous embed on the admin side: `src/app/admin/parents/page.tsx:28`
+  uses `children` → `classrooms(name)` and fails with PGRST201 like P2-5 did.
+  Use `classrooms!children_classroom_id_fkey(name)`; verify the admin parents page
+  lists each parent's children. · _feature-agent_ · deps: P2-5
+
 - [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.
   Also set `android:allowBackup="false"` in `AndroidManifest.xml` (WebView holds

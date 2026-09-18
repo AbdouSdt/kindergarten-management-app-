@@ -13,7 +13,9 @@ export default async function ParentOverviewPage() {
   // RLS ensures a parent only sees their own children.
   const { data: children, error: childrenError } = await supabase
     .from("children")
-    .select("id, first_name, last_name, photo_url, classrooms(name)");
+    .select(
+      "id, first_name, last_name, photo_url, classrooms!children_classroom_id_fkey(name)",
+    );
 
   const { data: announcements, error: announcementsError } = await supabase
     .from("announcements")

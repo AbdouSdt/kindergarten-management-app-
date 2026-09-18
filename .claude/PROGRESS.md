@@ -422,3 +422,9 @@ agent: mobile-agent · status: done (agent-side); item stays open for the device
 files: android/app/src/test/java/dz/creche/app/ExampleUnitTest.java, android/app/src/androidTest/java/dz/creche/app/ExampleInstrumentedTest.java
 notes: Template test packages renamed com.getcapacitor.myapp -> dz.creche.app; instrumented test now asserts the real applicationId. Splash theme and adaptive icon resources verified consistent, no fix needed. assembleDebug + unit/androidTest compile pass. Review PASS.
 next: user runs admin/teacher/parent walkthrough + back button on device, then tick P2-3; optional low-priority: AppTheme in styles.xml references undefined colorPrimary/colorPrimaryDark/colorAccent (unused by manifest, resolves from a library)
+
+## 2026-09-18 — P2-5 Parent home children card fails to load
+agent: feature-agent · status: done
+files: src/app/parent/page.tsx, src/app/parent/attendance/page.tsx
+notes: Found on device (APK), reproduces on web too. Root cause PGRST201: children↔classrooms became ambiguous once migration 0003 added child_classrooms; fixed by naming the FK `classrooms!children_classroom_id_fkey(name)`. Not an RLS or APK issue. Review PASS (type-check, lint, build).
+next: P2-6 (same embed in src/app/admin/parents/page.tsx:28)

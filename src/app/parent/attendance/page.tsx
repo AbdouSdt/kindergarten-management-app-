@@ -47,7 +47,9 @@ export default async function ParentAttendancePage() {
   // RLS limits this to the signed-in parent's own children.
   const { data: childrenData, error: loadError } = await supabase
     .from("children")
-    .select("id, first_name, last_name, classrooms(name)")
+    .select(
+      "id, first_name, last_name, classrooms!children_classroom_id_fkey(name)",
+    )
     .order("first_name");
 
   const children = childrenData ?? [];
