@@ -446,3 +446,9 @@ agent: user + mobile-agent · status: done
 files: —
 notes: User confirmed on a Samsung device: back button works, all three roles work after P2-5/P2-6/P2-7 fixes (children embed, admin embed, mobile nav drawer).
 next: P2-4
+
+## 2026-09-18 — P2-4 Release APK setup
+agent: mobile-agent · status: done (deliverable = guide + config; signing is the user's step)
+files: android/app/src/main/AndroidManifest.xml, android/app/build.gradle, android/keystore.properties.example, docs/android-release.md, .gitignore
+notes: allowBackup=false; release signingConfig only attached when android/keystore.properties exists (debug unaffected, release builds unsigned otherwise); keystore lives outside repo, no secrets handled. Review PASS. Signed path itself untested — first real run is the user's.
+next: user follows docs/android-release.md to produce + verify the signed APK; optional: friendlier GradleException for missing keys in keystore.properties; P3 items need decisions (FCM/Firebase project for P3-1)

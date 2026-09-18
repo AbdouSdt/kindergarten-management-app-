@@ -59,7 +59,8 @@ next-env.d.ts
 /android/.cxx/
 *.apk
 *.aab
-# release signing - never commit (see docs/android-release.md)
+# Android release signing secrets - never commit. The committed template is
+# android/keystore.properties.example; steps are in docs/android-release.md
 keystore.properties
 *.jks
 *.keystore

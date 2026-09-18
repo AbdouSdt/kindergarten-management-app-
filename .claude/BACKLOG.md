@@ -194,11 +194,13 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   → done 2026-09-18; drawer in `mobile-nav-drawer.tsx`, reviewed twice (stale-open bug
   after hardware-back fixed). Runtime check on device still pending.
 
-- [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
+- [x] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.
   Also set `android:allowBackup="false"` in `AndroidManifest.xml` (WebView holds
   cookie auth) and fix the `.gitignore` comment that already points at this doc.
   · _mobile-agent_ · deps: P2-3
+  → done 2026-09-18 (guide + conditional signing + allowBackup=false); the signed
+  build itself is the user's to run per `docs/android-release.md` — never here.
 
 ## P3 — later
 
