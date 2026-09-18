@@ -5,6 +5,7 @@ import {
   LOAD_ERROR_HINT,
   LOAD_ERROR_TITLE,
 } from "@/components/ui/empty-state";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 
 import { AddParentDialog } from "./add-parent-dialog";
@@ -64,6 +65,20 @@ export default async function AdminParentsPage() {
     classroom: c.classrooms?.name ?? null,
   }));
 
+  const linkedChildrenFor = (parentId: string) =>
+    (linksByParent.get(parentId) ?? [])
+      .map((l) => {
+        const c = childById.get(l.childId);
+        return c
+          ? {
+              id: c.id,
+              name: `${c.first_name} ${c.last_name}`,
+              relationship: l.relationship,
+            }
+          : null;
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== null);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -89,93 +104,87 @@ export default async function AdminParentsPage() {
           description="اضغط «إضافة ولي أمر» لإنشاء أول حساب."
         />
       ) : (
-        <div className="border-border overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-muted text-muted-foreground text-start">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">الاسم</th>
-                <th className="px-4 py-2.5 font-medium">البريد الإلكتروني</th>
-                <th className="px-4 py-2.5 font-medium">الهاتف</th>
-                <th className="px-4 py-2.5 font-medium">الأطفال المرتبطون</th>
-                <th className="px-4 py-2.5 font-medium">إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parents.map((p) => {
-                const links = linksByParent.get(p.id) ?? [];
-                const linkedChildren = links
-                  .map((l) => {
-                    const c = childById.get(l.childId);
-                    return c
-                      ? {
-                          id: c.id,
-                          name: `${c.first_name} ${c.last_name}`,
-                          relationship: l.relationship,
-                        }
-                      : null;
-                  })
-                  .filter((c): c is NonNullable<typeof c> => c !== null);
+        <ResponsiveTable
+          rows={parents}
+          rowKey={(p) => p.id}
+          columns={[
+            {
+              key: "name",
+              header: "الاسم",
+              cell: (p) => (
+                <span className="font-medium">{p.full_name ?? "—"}</span>
+              ),
+            },
+            {
+              key: "email",
+              header: "البريد الإلكتروني",
+              cell: (p) => <span dir="ltr">{emailById.get(p.id) ?? "—"}</span>,
+            },
+            {
+              key: "phone",
+              header: "الهاتف",
+              cell: (p) => <span dir="ltr">{p.phone ?? "—"}</span>,
+            },
+            {
+              key: "children",
+              header: "الأطفال المرتبطون",
+              cell: (p) => {
+                const linkedChildren = linkedChildrenFor(p.id);
+
+                return linkedChildren.length ? (
+                  <ul className="space-y-0.5">
+                    {linkedChildren.map((c) => (
+                      <li key={c.id}>
+                        {c.name}
+                        {c.relationship && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            — {c.relationship}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="text-muted-foreground">لا يوجد</span>
+                );
+              },
+            },
+            {
+              key: "actions",
+              header: "إجراءات",
+              labelled: false,
+              cell: (p) => {
+                const linkedChildren = linkedChildrenFor(p.id);
 
                 return (
-                  <tr key={p.id} className="border-border border-t align-top">
-                    <td className="px-4 py-3 font-medium">
-                      {p.full_name ?? "—"}
-                    </td>
-                    <td className="px-4 py-3" dir="ltr">
-                      {emailById.get(p.id) ?? "—"}
-                    </td>
-                    <td className="px-4 py-3" dir="ltr">
-                      {p.phone ?? "—"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {linkedChildren.length ? (
-                        <ul className="space-y-0.5">
-                          {linkedChildren.map((c) => (
-                            <li key={c.id}>
-                              {c.name}
-                              {c.relationship && (
-                                <span className="text-muted-foreground">
-                                  {" "}
-                                  — {c.relationship}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <span className="text-muted-foreground">لا يوجد</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <ManageChildrenDialog
-                          parent={{
-                            id: p.id,
-                            name: p.full_name ?? "ولي الأمر",
-                          }}
-                          linkedChildren={linkedChildren}
-                          allChildren={allChildOptions}
-                        />
-                        <EditParentDialog
-                          parent={{
-                            id: p.id,
-                            fullName: p.full_name ?? "",
-                            email: emailById.get(p.id) ?? "",
-                            phone: p.phone ?? "",
-                          }}
-                        />
-                        <DeleteParentButton
-                          id={p.id}
-                          name={p.full_name ?? "ولي الأمر"}
-                        />
-                      </div>
-                    </td>
-                  </tr>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <ManageChildrenDialog
+                      parent={{
+                        id: p.id,
+                        name: p.full_name ?? "ولي الأمر",
+                      }}
+                      linkedChildren={linkedChildren}
+                      allChildren={allChildOptions}
+                    />
+                    <EditParentDialog
+                      parent={{
+                        id: p.id,
+                        fullName: p.full_name ?? "",
+                        email: emailById.get(p.id) ?? "",
+                        phone: p.phone ?? "",
+                      }}
+                    />
+                    <DeleteParentButton
+                      id={p.id}
+                      name={p.full_name ?? "ولي الأمر"}
+                    />
+                  </div>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+          ]}
+        />
       )}
     </div>
   );

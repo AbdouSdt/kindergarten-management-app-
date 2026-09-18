@@ -5,6 +5,7 @@ import {
   LOAD_ERROR_HINT,
   LOAD_ERROR_TITLE,
 } from "@/components/ui/empty-state";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { createClient } from "@/lib/supabase/server";
 
 import {
@@ -53,73 +54,77 @@ export default async function AdminClassroomsPage() {
         <ClassroomDialog />
       </div>
 
-      {loadError && (
+      {loadError ? (
         <EmptyState
           tone="error"
           title={LOAD_ERROR_TITLE}
           description={LOAD_ERROR_HINT}
         />
-      )}
-
-      <div className="border-border overflow-x-auto rounded-lg border">
-        <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-muted text-muted-foreground text-start">
-            <tr>
-              <th className="px-4 py-2.5 font-medium">الاسم</th>
-              <th className="px-4 py-2.5 font-medium">السعة</th>
-              <th className="px-4 py-2.5 font-medium">الأطفال المسجّلون</th>
-              <th className="px-4 py-2.5 font-medium">أستاذ مسند</th>
-              <th className="px-4 py-2.5 font-medium">إجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {classrooms.map((c) => {
-              const enrolled = enrolledCount.get(c.id) ?? 0;
-              return (
-                <tr key={c.id} className="border-border border-t align-top">
-                  <td className="px-4 py-3 font-medium">{c.name}</td>
-                  <td className="px-4 py-3">{c.capacity}</td>
-                  <td className="px-4 py-3">
+      ) : classrooms.length === 0 ? (
+        <EmptyState
+          title="لا توجد فصول بعد"
+          description="اضغط «إضافة فصل» للبدء."
+        />
+      ) : (
+        <ResponsiveTable
+          rows={classrooms}
+          rowKey={(c) => c.id}
+          columns={[
+            {
+              key: "name",
+              header: "الاسم",
+              cell: (c) => <span className="font-medium">{c.name}</span>,
+            },
+            {
+              key: "capacity",
+              header: "السعة",
+              cell: (c) => c.capacity,
+            },
+            {
+              key: "enrolled",
+              header: "الأطفال المسجّلون",
+              cell: (c) => {
+                const enrolled = enrolledCount.get(c.id) ?? 0;
+                return (
+                  <>
                     {enrolled}
                     {enrolled > c.capacity && (
                       <span className="text-red-600"> (تجاوز السعة)</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {hasTeacher.has(c.id) ? (
-                      "نعم"
-                    ) : (
-                      <span className="text-muted-foreground">لا</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="flex items-center gap-3">
-                      <ClassroomDialog
-                        classroom={{
-                          id: c.id,
-                          name: c.name,
-                          capacity: c.capacity,
-                        }}
-                      />
-                      <DeleteClassroomButton id={c.id} name={c.name} />
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-            {classrooms.length === 0 && !loadError && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="text-muted-foreground px-4 py-10 text-center"
-                >
-                  لا توجد فصول بعد. اضغط «إضافة فصل» للبدء.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </>
+                );
+              },
+            },
+            {
+              key: "teacher",
+              header: "أستاذ مسند",
+              cell: (c) =>
+                hasTeacher.has(c.id) ? (
+                  "نعم"
+                ) : (
+                  <span className="text-muted-foreground">لا</span>
+                ),
+            },
+            {
+              key: "actions",
+              header: "إجراءات",
+              labelled: false,
+              cell: (c) => (
+                <span className="flex items-center gap-3">
+                  <ClassroomDialog
+                    classroom={{
+                      id: c.id,
+                      name: c.name,
+                      capacity: c.capacity,
+                    }}
+                  />
+                  <DeleteClassroomButton id={c.id} name={c.name} />
+                </span>
+              ),
+            },
+          ]}
+        />
+      )}
     </div>
   );
 }

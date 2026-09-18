@@ -6,6 +6,7 @@ import {
   LOAD_ERROR_HINT,
   LOAD_ERROR_TITLE,
 } from "@/components/ui/empty-state";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { getProfile, getTeacherClassroomIds } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate } from "@/lib/utils";
@@ -119,57 +120,57 @@ export default async function TeacherChildrenPage() {
       ) : childrenList.length === 0 ? (
         <EmptyState title="لا يوجد أطفال في فصولك بعد" />
       ) : (
-        <div className="border-border overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-muted text-muted-foreground text-start">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">الاسم</th>
-                <th className="px-4 py-2.5 font-medium">الفصول</th>
-                <th className="px-4 py-2.5 font-medium">أولياء الأمور</th>
-                <th className="px-4 py-2.5 font-medium">تاريخ الميلاد</th>
-              </tr>
-            </thead>
-            <tbody>
-              {childrenList.map((child) => {
+        <ResponsiveTable
+          rows={childrenList}
+          rowKey={(child) => child.id}
+          columns={[
+            {
+              key: "name",
+              header: "الاسم",
+              cell: (child) => (
+                <span className="flex items-center gap-2.5 font-medium">
+                  <Avatar
+                    src={child.photo_url}
+                    name={`${child.first_name} ${child.last_name}`}
+                    size={32}
+                  />
+                  {child.first_name} {child.last_name}
+                </span>
+              ),
+            },
+            {
+              key: "classrooms",
+              header: "الفصول",
+              cell: (child) => {
                 const rooms = (classroomsByChild.get(child.id) ?? []).filter(
                   Boolean,
                 );
-                const parentNames = guardiansByChild.get(child.id) ?? [];
-                return (
-                  <tr key={child.id} className="border-border border-t align-top">
-                    <td className="px-4 py-3 font-medium">
-                      <span className="flex items-center gap-2.5">
-                        <Avatar
-                          src={child.photo_url}
-                          name={`${child.first_name} ${child.last_name}`}
-                          size={32}
-                        />
-                        {child.first_name} {child.last_name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {rooms.length ? (
-                        rooms.join("، ")
-                      ) : (
-                        <span className="text-muted-foreground">غير محدد</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {parentNames.length ? (
-                        parentNames.join("، ")
-                      ) : (
-                        <span className="text-muted-foreground">لا يوجد</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {formatDate(child.date_of_birth)}
-                    </td>
-                  </tr>
+                return rooms.length ? (
+                  rooms.join("، ")
+                ) : (
+                  <span className="text-muted-foreground">غير محدد</span>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              },
+            },
+            {
+              key: "parents",
+              header: "أولياء الأمور",
+              cell: (child) => {
+                const parentNames = guardiansByChild.get(child.id) ?? [];
+                return parentNames.length ? (
+                  parentNames.join("، ")
+                ) : (
+                  <span className="text-muted-foreground">لا يوجد</span>
+                );
+              },
+            },
+            {
+              key: "dob",
+              header: "تاريخ الميلاد",
+              cell: (child) => formatDate(child.date_of_birth),
+            },
+          ]}
+        />
       )}
     </div>
   );

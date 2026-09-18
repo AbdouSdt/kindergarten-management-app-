@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Field, controlClass } from "@/components/ui/field";
-import { StatusBadge } from "@/components/ui/status-badge";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
+import { ATTENDANCE_STATUS_LABEL } from "@/components/ui/status-badge";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
@@ -207,53 +208,56 @@ export default async function AdminAttendanceHistoryPage({
               <p className="text-muted-foreground text-sm">
                 أيام الدراسة المسجّلة في الفترة: {schoolDays.size}
               </p>
-              <div className="border-border overflow-x-auto rounded-lg border">
-                <table className="w-full min-w-[720px] text-sm">
-                  <thead className="bg-muted text-muted-foreground text-start">
-                    <tr>
-                      <th className="px-4 py-2.5 font-medium">الطفل</th>
-                      <th className="px-4 py-2.5 font-medium">
-                        <StatusBadge status="present" />
-                      </th>
-                      <th className="px-4 py-2.5 font-medium">
-                        <StatusBadge status="absent" />
-                      </th>
-                      <th className="px-4 py-2.5 font-medium">
-                        <StatusBadge status="late" />
-                      </th>
-                      <th className="px-4 py-2.5 font-medium">
-                        <StatusBadge status="excused" />
-                      </th>
-                      <th className="px-4 py-2.5 font-medium">أيام مسجّلة</th>
-                      <th className="px-4 py-2.5 font-medium">نسبة الغياب</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {childrenList.map((child) => {
+              <ResponsiveTable
+                rows={childrenList}
+                rowKey={(child) => child.id}
+                columns={[
+                  {
+                    key: "name",
+                    header: "الطفل",
+                    cell: (child) => (
+                      <span className="font-medium">
+                        {child.first_name} {child.last_name}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "present",
+                    header: ATTENDANCE_STATUS_LABEL.present,
+                    cell: (child) => (tally.get(child.id) ?? emptyTally()).present,
+                  },
+                  {
+                    key: "absent",
+                    header: ATTENDANCE_STATUS_LABEL.absent,
+                    cell: (child) => (tally.get(child.id) ?? emptyTally()).absent,
+                  },
+                  {
+                    key: "late",
+                    header: ATTENDANCE_STATUS_LABEL.late,
+                    cell: (child) => (tally.get(child.id) ?? emptyTally()).late,
+                  },
+                  {
+                    key: "excused",
+                    header: ATTENDANCE_STATUS_LABEL.excused,
+                    cell: (child) => (tally.get(child.id) ?? emptyTally()).excused,
+                  },
+                  {
+                    key: "total",
+                    header: "أيام مسجّلة",
+                    cell: (child) => (tally.get(child.id) ?? emptyTally()).total,
+                  },
+                  {
+                    key: "rate",
+                    header: "نسبة الغياب",
+                    cell: (child) => {
                       const t = tally.get(child.id) ?? emptyTally();
-                      const absenceRate = t.total
+                      return t.total
                         ? `${Math.round((t.absent / t.total) * 100)}%`
                         : "—";
-                      return (
-                        <tr
-                          key={child.id}
-                          className="border-border border-t align-top"
-                        >
-                          <td className="px-4 py-3 font-medium">
-                            {child.first_name} {child.last_name}
-                          </td>
-                          <td className="px-4 py-3">{t.present}</td>
-                          <td className="px-4 py-3">{t.absent}</td>
-                          <td className="px-4 py-3">{t.late}</td>
-                          <td className="px-4 py-3">{t.excused}</td>
-                          <td className="px-4 py-3">{t.total}</td>
-                          <td className="px-4 py-3">{absenceRate}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    },
+                  },
+                ]}
+              />
             </>
           )}
         </>
