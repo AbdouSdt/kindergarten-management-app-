@@ -26,6 +26,19 @@ const config: CapacitorConfig = {
     androidScheme: "https",
     cleartext: false,
   },
+  plugins: {
+    // Edge-to-edge is the Android 15+ default. SystemBars (bundled in Capacitor 8)
+    // hands the real status/gesture-bar insets to the page as env(safe-area-inset-*),
+    // which app-shell.tsx already consumes. The app sends viewport-fit=cover, so tell
+    // the plugin up front: without the hint it only learns this after the first paint,
+    // the page lays out with env() = 0 and the header sits under the status bar until
+    // something forces a re-layout. Bar icon style is left on DEFAULT so it follows
+    // the system dark/light mode, exactly like the page's prefers-color-scheme.
+    SystemBars: {
+      insetsHandling: "css",
+      initialViewportFitValueHint: "cover",
+    },
+  },
 };
 
 export default config;

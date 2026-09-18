@@ -410,3 +410,9 @@ agent: mobile-agent · status: done
 files: capacitor.config.ts, capacitor-www/index.html, package.json, package-lock.json, .gitignore, .env.example, src/components/pwa/native-back-button.tsx, src/app/layout.tsx, android/**
 notes: appId dz.creche.app, Arabic label «منصة الروضة». Server URL defaults to the Vercel URL; dedicated CAPACITOR_SERVER_URL override (https-only), not NEXT_PUBLIC_SITE_URL which is localhost in dev. Icons/splash generated from public/icons. Gradle not run yet.
 next: P2-3 (verify splash style, rename template test packages); P2-4 (allowBackup=false, gitignore comment)
+
+## 2026-09-18 — P2-3 (partial) Android build fixes + status-bar insets
+agent: mobile-agent · status: in progress (awaiting user's three-role walkthrough on device)
+files: android/gradle.properties, android/settings.gradle, android/gradle/gradle-daemon-jvm.properties, android/app/src/main/res/values/ic_launcher_background.xml, capacitor.config.ts
+notes: Project path contains «é» -> android.overridePathCheck=true. Capacitor needs JDK 21 (JDK 17 too old, Android Studio's JDK 25 too new for Gradle 8.14); build from CLI with JAVA_HOME=C:\Users\sabdo\.jdks\jbr-21.0.11. Status-bar overlap fixed via SystemBars insetsHandling "css" + viewport-fit cover. Debug APK builds and installs via adb on the user's Samsung; login screen renders. Review PASS.
+next: user confirms admin/teacher/parent walkthrough + back button, then tick P2-3
