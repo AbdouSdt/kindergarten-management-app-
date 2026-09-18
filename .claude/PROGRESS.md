@@ -434,3 +434,9 @@ agent: feature-agent · status: done
 files: src/app/admin/parents/page.tsx
 notes: Same PGRST201 fix as P2-5 (`classrooms!children_classroom_id_fkey(name)`). Verified live as the admin test user (old select errors, new returns 10 rows). Sweep of src/ finds no other un-hinted children→classrooms embed. Review PASS.
 next: user re-installs the APK (or reloads) and confirms parent home shows children, then finishes the three-role walkthrough to tick P2-3
+
+## 2026-09-18 — P2-7 Mobile navigation drawer
+agent: ui-agent · status: done
+files: src/components/nav/mobile-nav-drawer.tsx, src/components/nav/app-shell.tsx, src/components/nav/sidebar-nav.tsx, src/app/globals.css
+notes: Found on device: below md the sidebar was hidden with no replacement, so admin reached 3 areas and teacher/parent none. Hamburger in the mobile header opens an RTL drawer (all roles, reuses SidebarNav via onNavigate, includes sign-out). Review 1 found a stale-open bug after hardware-back (drawer re-opens on later visit); fixed by render-phase reset; review 2 PASS. Only verified by reading code + gates, not at runtime.
+next: user pushes, redeploys, checks the drawer on the phone for all three roles, then P2-3 can be ticked

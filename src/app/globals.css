@@ -76,8 +76,25 @@
   }
 }
 
+/* Mobile nav drawer: slides in from the inline-start edge (right in RTL). */
+@keyframes drawer-in {
+  from {
+    transform: translateX(var(--drawer-from, -100%));
+  }
+}
+
+.drawer-panel {
+  --drawer-from: -100%;
+  animation: drawer-in 0.2s ease-out;
+}
+
+[dir="rtl"] .drawer-panel {
+  --drawer-from: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .sheet-panel {
+  .sheet-panel,
+  .drawer-panel {
     animation: none;
   }
 }

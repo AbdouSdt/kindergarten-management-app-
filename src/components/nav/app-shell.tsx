@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { MobileNavDrawer } from "@/components/nav/mobile-nav-drawer";
 import { SidebarNav, type NavItem } from "@/components/nav/sidebar-nav";
 import { InstallPromptButton } from "@/components/pwa/install-prompt-button";
 
@@ -36,12 +37,19 @@ export function AppShell({ title, navItems, userName, children }: AppShellProps)
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="border-border bg-card flex items-center justify-between gap-2 border-b px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:hidden">
-          <Link
-            href="/"
-            className="flex min-h-[44px] min-w-0 items-center truncate text-base font-semibold"
-          >
-            {title}
-          </Link>
+          <div className="flex min-w-0 items-center gap-1">
+            <MobileNavDrawer
+              title={title}
+              navItems={navItems}
+              userName={userName}
+            />
+            <Link
+              href="/"
+              className="flex min-h-[44px] min-w-0 items-center truncate text-base font-semibold"
+            >
+              {title}
+            </Link>
+          </div>
           <div className="flex shrink-0 items-center gap-2">
             <InstallPromptButton />
             <SignOutButton />

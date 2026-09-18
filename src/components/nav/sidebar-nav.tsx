@@ -10,7 +10,13 @@ export type NavItem = {
   href: string;
 };
 
-export function SidebarNav({ items }: { items: NavItem[] }) {
+export function SidebarNav({
+  items,
+  onNavigate,
+}: {
+  items: NavItem[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
@@ -22,6 +28,7 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
+            onClick={onNavigate}
             className={cn(
               "flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium transition-colors",
               active

@@ -184,6 +184,16 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   lists each parent's children. · _feature-agent_ · deps: P2-5
   → done 2026-09-18; live check as admin: old select PGRST201, new returns rows.
 
+- [x] **P2-7** — Mobile navigation drawer: `AppShell` hides the sidebar below `md` and
+  the phone header has no nav at all, so on a phone admin reaches only 3 areas
+  (dashboard cards) and teacher/parent reach none of their sub-areas. Add a
+  hamburger button in the mobile header of `src/components/nav/app-shell.tsx`
+  opening an RTL drawer that reuses `SidebarNav` (+ `onNavigate` callback to
+  close it), sign-out inside. Found by the user on device 2026-09-18.
+  · _ui-agent_ · deps: P2-6
+  → done 2026-09-18; drawer in `mobile-nav-drawer.tsx`, reviewed twice (stale-open bug
+  after hardware-back fixed). Runtime check on device still pending.
+
 - [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.
   Also set `android:allowBackup="false"` in `AndroidManifest.xml` (WebView holds
