@@ -166,6 +166,8 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   `windowSplashScreenBackground` style and adaptive icon render, and rename the
   template test packages `com.getcapacitor.myapp` → `dz.creche.app`.
   · _mobile-agent_ · deps: P2-2
+  → agent side done 2026-09-18 (APK builds/installs, packages renamed, splash +
+  icon verified); only the user's on-device three-role walkthrough remains.
 
 - [ ] **P2-4** — Release APK: `docs/android-release.md` with the keystore and
   signing steps for the user to run. Never handle the keystore password here.

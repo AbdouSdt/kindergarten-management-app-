@@ -416,3 +416,9 @@ agent: mobile-agent · status: in progress (awaiting user's three-role walkthrou
 files: android/gradle.properties, android/settings.gradle, android/gradle/gradle-daemon-jvm.properties, android/app/src/main/res/values/ic_launcher_background.xml, capacitor.config.ts
 notes: Project path contains «é» -> android.overridePathCheck=true. Capacitor needs JDK 21 (JDK 17 too old, Android Studio's JDK 25 too new for Gradle 8.14); build from CLI with JAVA_HOME=C:\Users\sabdo\.jdks\jbr-21.0.11. Status-bar overlap fixed via SystemBars insetsHandling "css" + viewport-fit cover. Debug APK builds and installs via adb on the user's Samsung; login screen renders. Review PASS.
 next: user confirms admin/teacher/parent walkthrough + back button, then tick P2-3
+
+## 2026-09-18 — P2-3 (remainder) test package rename + splash/icon check
+agent: mobile-agent · status: done (agent-side); item stays open for the device walkthrough
+files: android/app/src/test/java/dz/creche/app/ExampleUnitTest.java, android/app/src/androidTest/java/dz/creche/app/ExampleInstrumentedTest.java
+notes: Template test packages renamed com.getcapacitor.myapp -> dz.creche.app; instrumented test now asserts the real applicationId. Splash theme and adaptive icon resources verified consistent, no fix needed. assembleDebug + unit/androidTest compile pass. Review PASS.
+next: user runs admin/teacher/parent walkthrough + back button on device, then tick P2-3; optional low-priority: AppTheme in styles.xml references undefined colorPrimary/colorPrimaryDark/colorAccent (unused by manifest, resolves from a library)
