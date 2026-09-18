@@ -99,7 +99,11 @@ When the shell is unavailable in this environment (no local Linux workspace),
 
 ### 6. Log and repeat
 
-Tick the item in `BACKLOG.md`. Append one block to `PROGRESS.md`:
+Tick the item in `BACKLOG.md`. Append one block to `PROGRESS.md`, then
+**commit the item** (standing user instruction): stage only that item's files
+plus the two log files, one commit per item, Arabic-free English message ending
+with the Co-Authored-By line. Committing per item also keeps the next
+review-agent diff scoped to the item under test. Never push.
 
 ```
 ## <date> — <item title>

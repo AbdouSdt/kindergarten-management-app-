@@ -80,5 +80,8 @@ installability and mobile UX → Capacitor Android shell → signed APK.
 - Change only what your brief names. Leave unrelated files alone.
 - Prefer editing an existing pattern over introducing a new abstraction.
 - Do not add a dependency unless the brief says to.
-- Never commit, push, or run destructive git commands unless asked.
+- Commit after every reviewed, passing item (standing user instruction, one
+  commit per item, message ends with the Co-Authored-By line). Agents do not
+  commit — the orchestrator does after review passes. Never push or run
+  destructive git commands unless asked.
 - Finish by reporting: files touched, decisions, follow-ups. Nothing else.
