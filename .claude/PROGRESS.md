@@ -440,3 +440,9 @@ agent: ui-agent · status: done
 files: src/components/nav/mobile-nav-drawer.tsx, src/components/nav/app-shell.tsx, src/components/nav/sidebar-nav.tsx, src/app/globals.css
 notes: Found on device: below md the sidebar was hidden with no replacement, so admin reached 3 areas and teacher/parent none. Hamburger in the mobile header opens an RTL drawer (all roles, reuses SidebarNav via onNavigate, includes sign-out). Review 1 found a stale-open bug after hardware-back (drawer re-opens on later visit); fixed by render-phase reset; review 2 PASS. Only verified by reading code + gates, not at runtime.
 next: user pushes, redeploys, checks the drawer on the phone for all three roles, then P2-3 can be ticked
+
+## 2026-09-18 — P2-3 Debug APK (closed)
+agent: user + mobile-agent · status: done
+files: —
+notes: User confirmed on a Samsung device: back button works, all three roles work after P2-5/P2-6/P2-7 fixes (children embed, admin embed, mobile nav drawer).
+next: P2-4

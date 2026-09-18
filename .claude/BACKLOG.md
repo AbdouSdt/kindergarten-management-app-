@@ -161,13 +161,13 @@ Format: `- [ ] **id** — title · _agent_ · deps: id, id`
   → done 2026-09-18; appId `dz.creche.app`, server URL overridable via
   `CAPACITOR_SERVER_URL` at `cap sync` time.
 
-- [ ] **P2-3** — Debug APK: `./gradlew assembleDebug`, install on a device,
+- [x] **P2-3** — Debug APK: `./gradlew assembleDebug`, install on a device,
   walk the three roles end to end. Also verify the splash
   `windowSplashScreenBackground` style and adaptive icon render, and rename the
   template test packages `com.getcapacitor.myapp` → `dz.creche.app`.
   · _mobile-agent_ · deps: P2-2
   → agent side done 2026-09-18 (APK builds/installs, packages renamed, splash +
-  icon verified); only the user's on-device three-role walkthrough remains.
+  icon verified); user confirmed the three-role walkthrough + back button on device 2026-09-18.
 
 - [x] **P2-5** — Parent home «أطفالي» fails to load: found on device during the P2-3
   walkthrough — `/parent` shows the error state «تعذّر تحميل قائمة الأطفال» while
