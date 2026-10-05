@@ -452,3 +452,9 @@ agent: mobile-agent · status: done (deliverable = guide + config; signing is th
 files: android/app/src/main/AndroidManifest.xml, android/app/build.gradle, android/keystore.properties.example, docs/android-release.md, .gitignore
 notes: allowBackup=false; release signingConfig only attached when android/keystore.properties exists (debug unaffected, release builds unsigned otherwise); keystore lives outside repo, no secrets handled. Review PASS. Signed path itself untested — first real run is the user's.
 next: user follows docs/android-release.md to produce + verify the signed APK; optional: friendlier GradleException for missing keys in keystore.properties; P3 items need decisions (FCM/Firebase project for P3-1)
+
+## 2026-10-05 — P2-4 signed release APK verified
+agent: user (keystore + build) · status: done
+files: —
+notes: User created the keystore outside the repo (never seen by agents), filled android/keystore.properties (git-ignored), ran assembleRelease -> BUILD SUCCESSFUL. apksigner verify: Verifies, v2 scheme true, 1 signer, RSA 2048. Output: android/app/build/outputs/apk/release/app-release.apk (~3 MB). First hit was a placeholder storeFile path (YOUR_USER) left from the example template.
+next: install on device (uninstall the debug build first); P3 items need user decisions (Firebase project for P3-1)
